@@ -1,0 +1,10 @@
+**Title: The "Agency-Autonomy Gap": Investigating the Mismatch Between Task-Level AI Comfort and Organizational Empowerment**
+
+**Hypothesis:** The "Anxiously Declining" and "Stagnant Neutral" classes are not merely products of insufficient training or culture, but are driven by an "Agency-Autonomy Gap"—a discrepancy between an employee's *willingness* to use AI for autonomous tasks (QGM block) and their *perceived freedom* to exercise discretion in those tasks (QKB_1_10: "freedom to choose tools" and QKB_1_11: "employee involvement in development"). 
+
+**Proposed Method:**
+1. **Gap Metric Construction:** Calculate an "Agency-Autonomy Gap" score for each respondent by subtracting the index of "Perceived Freedom/Involvement" (QKB_1_10, QKB_1_11) from the index of "Comfort with Autonomous AI Tasks" (QGM). 
+2. **Interaction Analysis:** Use this gap score as a moderator in a logistic regression model to predict class membership. I hypothesize that individuals with high "Autonomous Comfort" but low "Perceived Freedom" (a high positive gap) are significantly more likely to fall into the "Anxiously Declining" class, as their technical readiness is stifled by organizational rigidity.
+3. **Task-Specific Sensitivity:** Perform a Shapley Value decomposition on the QGM items to identify which specific autonomous tasks (e.g., "Predictive Analysis" vs. "Content Creation") contribute most to this anxiety when organizational freedom is low. 
+
+**Objective:** This approach moves beyond general "culture" and "training" to identify the specific friction point where technical AI capability meets organizational control. It tests whether the "Anxiously Declining" group is actually composed of "High-Capability/Low-Agency" employees, suggesting that for this segment, the solution is not more training, but the devolution of decision-making authority.
