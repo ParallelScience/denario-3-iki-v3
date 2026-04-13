@@ -1,0 +1,115 @@
+[
+  {
+    "content": "# IKI-Data-Raw: Workplace AI Adoption Survey \u2014 Job Security & Nature of Work Analysis\n\n## Research Focus\n\nThis project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.\n\n## File\n\n- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`\n- **Format:** Tab-separated values (load with `sep='\\t'`, `low_memory=False`)\n- **Shape:** 2,603 rows (respondents) \u00d7 234 columns (variables)\n- **Row identifier:** `Respid` (integer, unique per respondent)\n- **Missing values:** Coded as `.` (period). Treat `.` as NaN.\n\n---\n\n## Primary Outcome Variables\n\n### Job Security\n- `QEA_2` \u2014 \"Security of your current role: What impact does AI currently have?\" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.\n- `QEB_2` \u2014 Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.\n- `QGR` \u2014 \"How confident are you that your company will protect jobs as AI becomes more capable?\" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.\n- `QF_3` \u2014 Binary: \"I am worried about losing my job\" (among deterrents to AI use). 1 = Yes.\n\n### Changing Nature of Work (past 3 years)\n- `QGP_1` \u2014 AI's impact on *repetitive work* volume (Large decrease \u2192 Large increase, 5-level).\n- `QGP_2` \u2014 AI's impact on *creative work* volume.\n- `QGP_3` \u2014 AI's impact on *complex work* volume.\n- `QGH1_1` \u2014 Binary: no changes to team roles to date.\n- `QGH1_2` \u2014 Binary: roles on team have changed to date.\n\n### Changing Nature of Work (3-year expectation)\n- `QGU_1` \u2014 Expected AI impact on *repetitive work* volume.\n- `QGU_2` \u2014 Expected AI impact on *creative work* volume.\n- `QGU_3` \u2014 Expected AI impact on *complex work* volume.\n- `QGH2_1` \u2014 Binary: no changes to team roles expected.\n- `QGH2_2` \u2014 Binary: team roles will change in next 3 years.\n\n---\n\n## Predictor / Feature Variables\n\n### Demographics\n- `QDA` \u2014 country of work (9 countries)\n- `QDB` \u2014 industry (13 sectors)\n- `QDC` \u2014 age (integer, 18\u201369)\n- `HidQDC` \u2014 generational cohort: Gen Z, Millennial, GenX, Boomer\n- `QDD` \u2014 education level (ordinal, 7 levels)\n- `QDE_Year` \u2014 years of professional experience (integer)\n- `QDH` \u2014 department (IT, HR, Finance, Sales/Marketing, etc.)\n- `QDG` \u2014 job level (11 levels, ordinal from Intern to C-suite)\n- `HIDDG` \u2014 job profile (Managerial / Senior / Individual contributor)\n- `QDF` \u2014 income band (country-specific local currency; use as ordinal rank within country)\n\n### Company characteristics\n- `Global Employee Size` \u2014 ordinal band (6 levels)\n- `Global Annual Revenue` \u2014 ordinal band\n- `Market Capitalization` \u2014 ordinal band\n\n### AI adoption and usage\n- `QC` \u2014 AI use frequency (7-level ordinal: Once a month or fewer \u2192 Many times a day)\n- `QGI` \u2014 hours saved per week by AI (ordinal: increases time, None, <1h, 1\u20133h, 3\u20135h, >5h)\n- `QGS` \u2014 AI output error frequency (5-level ordinal: Never \u2192 Constantly)\n- `QGG` \u2014 AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)\n- `QKD` \u2014 company has deployed agentic AI: Yes/No/Not sure\n- `QGN` \u2014 company AI posture (5 levels: doesn't use \u2192 transforming most processes)\n- `QA_1_1` \u2014 binary: \"I do not currently use AI tools at work\"\n\n### AI emotional attitudes (QHD block, 16 binary Yes/No)\nOptimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.\nColumn format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`\n\n### AI task comfort \u2014 autonomous AI (QGM block, 17 binary)\nWhether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.\n\n### Perceived AI impact \u2014 other dimensions (QEA/QEB \u2014 excluding the job security item already listed)\nCurrent impact ratings (QEA_1, QEA_3\u2013QEA_15) and 3-year expected ratings (QEB_1, QEB_3\u2013QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.\n\n### Company enablers (QKB block)\n11 items \u00d7 2 dimensions: importance rating (QKB_1_1\u201311, 5-level) and whether company does each (QKB_2_1\u201311, 5-level).\nItems: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.\n\n### Deterrents to AI use (QF block, 13 binary)\n- `QF_1` \u2014 No access to AI tools\n- `QF_2` \u2014 Don't know how to use AI tools\n- `QF_3` \u2014 Worried about losing job\n- `QF_4` \u2014 Fear of accountability\n- `QF_5` \u2014 Creates more work (needs checking)\n- `QF_6` \u2014 Distrust of AI accuracy\n- `QF_7` \u2014 Privacy/data safety concerns\n- `QF_8` \u2014 Doesn't fit work processes\n- `QF_9` \u2014 Don't see benefit\n- `QF_10` \u2014 Moral reservations\n- `QF_11` \u2014 Colleague resistance\n- `QF_13` \u2014 Nothing deters me\n\n### AI incentives (QKC block, 8 binary)\nFinancial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.\n\n### Company culture (QGO block, 5 Likert items)\nEncourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree \u2192 Strongly agree.\n\n### Company AI goals (QED block)\n`QED_1_1`\u2013`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.\n\n---\n\n## Encoding Notes\n\n- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes \u2192 1, else \u2192 0.\n- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = \u22122 \u2192 Significantly positive = +2; Not sure = NaN).\n- **QGP/QGU**: Values are \"Large decrease\", \"Moderate decrease\", \"No major change\", \"Moderate increase\", \"Large increase\" (map \u22122 to +2).\n- **QC** (frequency): Map to 1\u20137 integers (Once a month or fewer \u2192 Many times a day).\n- **QGI** (hours saved): Map ordinal including the \"AI increases time\" category (= \u22121 or 0), None = 0, <1h = 1, etc.\n- **QGS** (error frequency): Map Never = 0 \u2192 Constantly = 4.\n- **QGR** (job protection confidence): Map Not at all = 1 \u2192 Very confident = 4, Not sure = NaN.\n- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).\n\n---\n\n## Suggested Analysis Plan\n\n1. **Construct composite outcome indices:**\n   - *Job Security Index (current)*: encode QEA_2 as \u22122 to +2.\n   - *Job Security Index (future)*: encode QEB_2 as \u22122 to +2.\n   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded \u22122 to +2).\n   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.\n\n2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.\n\n3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.\n\n4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.\n\n5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.\n\n6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.\n",
+    "role": "assistant"
+  },
+  {
+    "content": "",
+    "name": "control_starter",
+    "tool_calls": [
+      {
+        "id": "1485",
+        "function": {
+          "arguments": "{\"context_variables\": {\"sub_task\": \"Index Validation\", \"agent\": \"engineer\", \"status\": \"in progress\", \"current_step\": 2}}",
+          "name": "record_status_starter"
+        },
+        "type": "function",
+        "thought_signature": "EjQKMgG+Pvb7XY6mR+Aa8UDhmEYDVXk0gUzDwWrn+JNVEa212P4x9IPqY6TFvOLB7BeWOart"
+      }
+    ],
+    "role": "assistant"
+  },
+  {
+    "content": "\n**Step number:** 2 out of 8.\n\n**Sub-task:** Index Validation\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Calculate and print Cronbach's alpha for QKB_Index and QGO_Index to verify internal consistency.\n- Save the validation results to a text file for the researcher.\n\n**Status:** in progress \u23f3\n",
+    "tool_responses": [
+      {
+        "tool_call_id": "1485",
+        "role": "tool",
+        "content": "\n**Step number:** 2 out of 8.\n\n**Sub-task:** Index Validation\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Calculate and print Cronbach's alpha for QKB_Index and QGO_Index to verify internal consistency.\n- Save the validation results to a text file for the researcher.\n\n**Status:** in progress \u23f3\n"
+      }
+    ],
+    "name": "_Group_Tool_Executor",
+    "role": "tool"
+  },
+  {
+    "content": "**Code Explanation:**\n\nThe code loads the preprocessed dataset from `data/processed_data.csv` and identifies the specific columns that make up the `QGO_Index` (Company Culture), `QKB_Index` (Organizational Enablers), and `QKB_Index_Reduced` (Organizational Enablers excluding regular training and employee involvement). It then calculates Cronbach's alpha for each set of items to measure their internal consistency (reliability). The results are printed to the console for immediate review and saved to a text file (`data/index_validation_results.txt`) so that the researcher agent can access them in subsequent steps.\n\n**Python Code:**\n\n```python\nimport pandas as pd\nimport numpy as np\nimport os\n\ndef cronbach_alpha(df_items):\n    \"\"\"\n    Calculate Cronbach's alpha for a dataframe of items to measure internal consistency.\n    \n    Parameters:\n    df_items (pd.DataFrame): DataFrame containing the items (columns) for the index.\n    \n    Returns:\n    float: Cronbach's alpha value.\n    \"\"\"\n    df_items = df_items.dropna()\n    k = df_items.shape[1]\n    if k <= 1:\n        return np.nan\n    var_items = df_items.var(axis=0, ddof=1).sum()\n    var_total = df_items.sum(axis=1).var(ddof=1)\n    if var_total == 0:\n        return np.nan\n    return (k / (k - 1)) * (1 - var_items / var_total)\n\nif __name__ == '__main__':\n    data_dir = \"data/\"\n    file_path = os.path.join(data_dir, \"processed_data.csv\")\n    \n    print(\"Loading processed dataset...\")\n    df = pd.read_csv(file_path, low_memory=False)\n    \n    # Identify columns for indices\n    qgo_cols = [c for c in df.columns if c.startswith('QGO_') and c != 'QGO_Index']\n    qkb_cols = [c for c in df.columns if c.startswith('QKB_1_') and c not in ['QKB_Index', 'QKB_Index_Reduced']]\n    qkb_reduced_cols = [c for c in qkb_cols if c not in ['QKB_1_4', 'QKB_1_11']]\n    \n    results = []\n    results.append(\"--- Index Validation Results ---\")\n    \n    if qgo_cols:\n        alpha_qgo = cronbach_alpha(df[qgo_cols])\n        res_str = \"Cronbach's alpha for QGO_Index (items=\" + str(len(qgo_cols)) + \"): \" + str(round(alpha_qgo, 3))\n        print(res_str)\n        results.append(res_str)\n        \n    if qkb_cols:\n        alpha_qkb = cronbach_alpha(df[qkb_cols])\n        res_str = \"Cronbach's alpha for QKB_Index (items=\" + str(len(qkb_cols)) + \"): \" + str(round(alpha_qkb, 3))\n        print(res_str)\n        results.append(res_str)\n        \n    if qkb_reduced_cols:\n        alpha_qkb_red = cronbach_alpha(df[qkb_reduced_cols])\n        res_str = \"Cronbach's alpha for QKB_Index_Reduced (items=\" + str(len(qkb_reduced_cols)) + \"): \" + str(round(alpha_qkb_red, 3))\n        print(res_str)\n        results.append(res_str)\n        \n    results.append(\"--------------------------------\")\n    \n    out_file = os.path.join(data_dir, \"index_validation_results.txt\")\n    with open(out_file, \"w\") as f:\n        f.write(\"\\n\".join(results) + \"\\n\")\n        \n    print(\"Validation results saved to \" + out_file)\n```",
+    "name": "engineer",
+    "role": "user"
+  },
+  {
+    "content": "**Code Explanation:**\n\nThe code loads the preprocessed dataset from data/processed_data.csv and identifies the specific columns that make up the QGO_Index (Company Culture), QKB_Index (Organizational Enablers), and QKB_Index_Reduced (Organizational Enablers excluding regular training and employee involvement). It then calculates Cronbach's alpha for each set of items to measure their internal consistency (reliability). The results are printed to the console for immediate review and saved to a text file (data/index_validation_results.txt) so that the researcher agent can access them in subsequent steps. The cronbach_alpha function calculates the reliability coefficient using the formula: alpha = (k / (k - 1)) * (1 - sum(variance_of_items) / variance_of_total_score).\n\n**Modifications:**\n\nAdded the required preamble, ensured all file paths use the data/ directory, and wrapped the execution logic in an if __name__ == '__main__': block.\n\n**Python Code:**\n\n```python\n# filename: codebase/step_2.py\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport pandas as pd\nimport numpy as np\nimport os\n\ndef cronbach_alpha(df_items):\n    \"\"\"\n    Calculate Cronbach's alpha for a dataframe of items to measure internal consistency.\n    \n    Parameters:\n    df_items (pd.DataFrame): DataFrame containing the items (columns) for the index.\n    \n    Returns:\n    float: Cronbach's alpha value.\n    \"\"\"\n    df_items = df_items.dropna()\n    k = df_items.shape[1]\n    if k <= 1:\n        return np.nan\n    var_items = df_items.var(axis=0, ddof=1).sum()\n    var_total = df_items.sum(axis=1).var(ddof=1)\n    if var_total == 0:\n        return np.nan\n    return (k / (k - 1)) * (1 - var_items / var_total)\n\nif __name__ == '__main__':\n    data_dir = \"data/\"\n    file_path = os.path.join(data_dir, \"processed_data.csv\")\n    \n    print(\"Loading processed dataset...\")\n    df = pd.read_csv(file_path, low_memory=False)\n    \n    qgo_cols = [c for c in df.columns if c.startswith('QGO_') and c != 'QGO_Index']\n    qkb_cols = [c for c in df.columns if c.startswith('QKB_1_') and c not in ['QKB_Index', 'QKB_Index_Reduced']]\n    qkb_reduced_cols = [c for c in qkb_cols if c not in ['QKB_1_4', 'QKB_1_11']]\n    \n    results = []\n    results.append(\"--- Index Validation Results ---\")\n    \n    if qgo_cols:\n        alpha_qgo = cronbach_alpha(df[qgo_cols])\n        res_str = \"Cronbach's alpha for QGO_Index (items=\" + str(len(qgo_cols)) + \"): \" + str(round(alpha_qgo, 3))\n        print(res_str)\n        results.append(res_str)\n        \n    if qkb_cols:\n        alpha_qkb = cronbach_alpha(df[qkb_cols])\n        res_str = \"Cronbach's alpha for QKB_Index (items=\" + str(len(qkb_cols)) + \"): \" + str(round(alpha_qkb, 3))\n        print(res_str)\n        results.append(res_str)\n        \n    if qkb_reduced_cols:\n        alpha_qkb_red = cronbach_alpha(df[qkb_reduced_cols])\n        res_str = \"Cronbach's alpha for QKB_Index_Reduced (items=\" + str(len(qkb_reduced_cols)) + \"): \" + str(round(alpha_qkb_red, 3))\n        print(res_str)\n        results.append(res_str)\n        \n    results.append(\"--------------------------------\")\n    \n    out_file = os.path.join(data_dir, \"index_validation_results.txt\")\n    with open(out_file, \"w\") as f:\n        f.write(\"\\n\".join(results) + \"\\n\")\n        \n    print(\"Validation results saved to \" + out_file)\n```",
+    "name": "engineer_response_evaluator",
+    "role": "user"
+  },
+  {
+    "content": "Execution results:\n\nExecution output: \nLoading processed dataset...\nCronbach's alpha for QGO_Index (items=5): 0.441\nCronbach's alpha for QKB_Index (items=12): 0.945\nCronbach's alpha for QKB_Index_Reduced (items=12): 0.945\nValidation results saved to data/index_validation_results.txt\n",
+    "name": "executor",
+    "role": "user"
+  },
+  {
+    "content": "Code execution recorded.\n\nExecution output:\nExecution results:\n\nExecution output: \nLoading processed dataset...\nCronbach's alpha for QGO_Index (items=5): 0.441\nCronbach's alpha for QKB_Index (items=12): 0.945\nCronbach's alpha for QKB_Index_Reduced (items=12): 0.945\nValidation results saved to data/index_validation_results.txt\n",
+    "name": "execution_recorder",
+    "role": "user"
+  },
+  {
+    "content": "",
+    "name": "executor_response_evaluator",
+    "tool_calls": [
+      {
+        "id": "613",
+        "function": {
+          "arguments": "{\"next_agent_suggestion\": \"controller\", \"execution_status\": \"success\"}",
+          "name": "post_execution_transfer"
+        },
+        "type": "function",
+        "thought_signature": "EjQKMgG+Pvb7I4EM70jDU0QZfvHGfLCQluO4lneyZ3POhFjUVgSEhG5sHENHCISOpmkUj14p"
+      }
+    ],
+    "role": "assistant"
+  },
+  {
+    "content": "Code execution status: success. Transfer to controller to evaluate step progress.\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nWorkflow status:\n\nPlan step number: 2\n\nAgent for sub-task (might be different from the next agent suggestion for debugging): engineer\n\nStep status (before execution): in progress\n\nCode status: success\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n",
+    "tool_responses": [
+      {
+        "tool_call_id": "613",
+        "role": "tool",
+        "content": "Code execution status: success. Transfer to controller to evaluate step progress.\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nWorkflow status:\n\nPlan step number: 2\n\nAgent for sub-task (might be different from the next agent suggestion for debugging): engineer\n\nStep status (before execution): in progress\n\nCode status: success\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n"
+      }
+    ],
+    "name": "_Group_Tool_Executor",
+    "role": "tool"
+  },
+  {
+    "content": "",
+    "name": "controller",
+    "tool_calls": [
+      {
+        "id": "9692",
+        "function": {
+          "arguments": "{\"step_status\": \"completed\"}",
+          "name": "record_status"
+        },
+        "type": "function",
+        "thought_signature": "EjQKMgG+Pvb7pUsHpsFEeliIIxN48Ey8RTnOXKwbhIgI6U8QhCyo1kc14TlozUTL4bWyPFrq"
+      }
+    ],
+    "role": "assistant"
+  },
+  {
+    "content": "\n**Step number:** 2 out of 8.\n\n**Sub-task:** Index Validation\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Calculate and print Cronbach's alpha for QKB_Index and QGO_Index to verify internal consistency.\n- Save the validation results to a text file for the researcher.\n\n**Step status:** completed \u2705\n\n**Code status:** success\n\n**Step iteration:** 0/10\n        ",
+    "tool_responses": [
+      {
+        "tool_call_id": "9692",
+        "role": "tool",
+        "content": "\n**Step number:** 2 out of 8.\n\n**Sub-task:** Index Validation\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Calculate and print Cronbach's alpha for QKB_Index and QGO_Index to verify internal consistency.\n- Save the validation results to a text file for the researcher.\n\n**Step status:** completed \u2705\n\n**Code status:** success\n\n**Step iteration:** 0/10\n        "
+      }
+    ],
+    "name": "_Group_Tool_Executor",
+    "role": "tool"
+  },
+  {
+    "content": "TERMINATE",
+    "name": "terminator",
+    "role": "user"
+  }
+]

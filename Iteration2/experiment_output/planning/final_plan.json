@@ -1,0 +1,86 @@
+{
+    "sub_tasks": [
+        {
+            "bullet_points": [
+                "Load the raw dataset, handling '.' as NaN.",
+                "Perform all required encoding for ordinal Likert scales, binary indicators, and frequency/ordinal variables.",
+                "Construct composite indices: Job Security (current/future) and Nature of Work Change (current/future).",
+                "Create \"Income Rank\" normalized by country.",
+                "Construct \"Company Culture\" (QGO_Index) and \"Organizational Enablers\" (QKB_Index) indices.",
+                "Create QKB_Index_Reduced (excluding QKB_1_4 and QKB_1_11) and binary \"Not sure\" indicators for QEA_2 and QEB_2.",
+                "Save the processed dataset."
+            ],
+            "sub_task": "Data Preprocessing and Index Construction",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Calculate and print Cronbach's alpha for QKB_Index and QGO_Index to verify internal consistency.",
+                "Save the validation results to a text file for the researcher."
+            ],
+            "sub_task": "Index Validation",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Perform EFA on 16 binary QHD items using a tetrachoric correlation matrix and oblique rotation.",
+                "Compute McDonald's omega for extracted factors.",
+                "Flag and report items with communality < 0.3 or cross-loadings > 0.3.",
+                "Save \"Positive Affect\" and \"Negative Affect\" factor scores to the dataset and print descriptive statistics."
+            ],
+            "sub_task": "Affective Disposition Modeling",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Perform LCA on job security indicators, comparing models with \"Not sure\" as a distinct category vs. missing.",
+                "Compute entropy for each solution (2–5 classes).",
+                "Save a BIC/AIC plot (2–5 classes) as a PNG.",
+                "Print class-conditional item-response probabilities and assign class membership to respondents."
+            ],
+            "sub_task": "Latent Class Analysis (LCA)",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Conduct Spearman rank correlations between predictors and outcomes with FDR (Benjamini-Hochberg) correction.",
+                "Report top 20 predictors per outcome with rho, adjusted p-values, and effect sizes.",
+                "Train a Random Forest regressor using 5-fold cross-validated permutation importance.",
+                "Print top 20 features with mean and standard deviation of permutation importance."
+            ],
+            "sub_task": "Bivariate Analysis and Random Forest",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Implement mixed-effects multinomial logistic regression (random intercept for QDA) to predict class membership.",
+                "Include QKB_1_4 x QKB_1_11 interaction term.",
+                "Check VIFs and report McFadden's Pseudo-R-squared.",
+                "Perform mediation analysis (path: QKB_Index_Reduced -> \"Negative Affect\" -> class membership) using 500+ bootstrap samples."
+            ],
+            "sub_task": "Regression and Mediation Analysis",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Generate multi-panel figure for LCA metrics (BIC/AIC/Entropy).",
+                "Create heatmap of class-conditional item-response probabilities.",
+                "Plot predicted probability curves for class membership across QKB_Index and QGO_Index.",
+                "Create interaction plot for QKB_1_4 x QKB_1_11 on \"Resiliently Optimistic\" class probability.",
+                "Create horizontal bar chart of top-20 Random Forest permutation importances with error bars."
+            ],
+            "sub_task": "Visualization",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Synthesize all quantitative findings, reporting exact numerical values (class proportions, entropy, omega, odds ratios, bootstrapped indirect effects).",
+                "Interpret the \"Not sure\" category and latent classes.",
+                "Discuss the interaction between Regular Training and Employee Involvement.",
+                "Write the full Results section of the research report."
+            ],
+            "sub_task": "Results Synthesis and Reporting",
+            "sub_task_agent": "researcher"
+        }
+    ]
+}

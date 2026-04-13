@@ -1,0 +1,1 @@
+python3 -c "import sklearn; print(sklearn.__version__); import factor_analyzer; print(factor_analyzer.__version__)"

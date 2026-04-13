@@ -1,0 +1,5 @@
+--- Index Validation Results ---
+Cronbach's alpha for QGO_Index (items=5): 0.441
+Cronbach's alpha for QKB_Index (items=12): 0.945
+Cronbach's alpha for QKB_Index_Reduced (items=12): 0.945
+--------------------------------

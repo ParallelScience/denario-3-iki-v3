@@ -1,0 +1,58 @@
+[
+  {
+    "Agent": "control starter",
+    "Cost ($)": 0.00097225,
+    "Prompt Tokens": 3811.0,
+    "Completion Tokens": 13.0,
+    "Total Tokens": 3824.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "controller",
+    "Cost ($)": 0.00519375,
+    "Prompt Tokens": 20553.0,
+    "Completion Tokens": 37.0,
+    "Total Tokens": 20590.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "engineer response evaluator",
+    "Cost ($)": 0.10373675,
+    "Prompt Tokens": 280871.0,
+    "Completion Tokens": 22346.0,
+    "Total Tokens": 303217.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "engineer",
+    "Cost ($)": 1.078762,
+    "Prompt Tokens": 357551.0,
+    "Completion Tokens": 30305.0,
+    "Total Tokens": 387856.0,
+    "Model": "gemini-3.1-pro-preview"
+  },
+  {
+    "Agent": "executor response evaluator",
+    "Cost ($)": 0.015622,
+    "Prompt Tokens": 55768.0,
+    "Completion Tokens": 1120.0,
+    "Total Tokens": 56888.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "bash",
+    "Cost ($)": 0.0158625,
+    "Prompt Tokens": 62838.0,
+    "Completion Tokens": 102.0,
+    "Total Tokens": 62940.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "Total",
+    "Cost ($)": 1.22014925,
+    "Prompt Tokens": 781392.0,
+    "Completion Tokens": 53923.0,
+    "Total Tokens": 835315.0,
+    "Model": NaN
+  }
+]
