@@ -1,0 +1,1521 @@
+
+###### PROMPT BEGINS ########
+Human: 
+**Role**: You are a Senior Scientific Researcher.
+**Objective**: Based on the provided dataset description and potential previous ideas, generate 10 distinct, high-impact research ideas for a scientific project. 
+
+**Task**: 
+Generate 10 research ideas that could lead to meaningful scientific discovery. These ideas must be diverse in their approach to the data and must be different to previous existing ideas.
+
+**Operational Constraints**:
+- We are trying to sample the ideas space as widely as possible. Thus, if there are existing ideas, make the 10 ideas as different as possible from the existing ones.
+- The 10 ideas should also be as different from each other as possible.
+- **Conciseness**: Each idea should be 3-4 sentences max. Focus on the "Research Question," not the execution.
+- **No Methodology**: Do not include plans, code, or specific algorithms. Only state the *Research Objective*.
+- **Consistency**: The ideas must strictly adhere to the constraints and physical reality described in the data description.
+- **Zero Redundancy**: If two ideas feel similar, discard one and find a new scientific angle.
+- Each idea must consist of a title and a brief description of it.
+
+Data description:
+# IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+
+
+
+
+
+
+
+Respond in the following format:
+
+\\begin{IDEAS}
+<IDEAS>
+\\end{IDEAS}
+
+In <IDEAS>, put the ideas you have generated. 
+
+###### PROMPT ENDS ########
+
+\begin{IDEAS}
+1. **The Paradox of High-Utility Adoption:** Investigate whether employees who report the highest time savings (QGI) and frequent AI usage (QC) simultaneously report higher job insecurity (QEA_2) due to the perception of AI as a replacement rather than an augmentation tool. This aims to determine if "efficiency gains" paradoxically signal individual obsolescence to the worker.
+
+2. **Cross-Cultural Resilience and AI Anxiety:** Compare the relationship between national cultural context (QDA) and the emotional attitude of "threat" (QHD) regarding AI. The objective is to identify if specific national labor market structures buffer or exacerbate the psychological impact of AI on job security perceptions.
+
+3. **Organizational "AI Maturity" vs. Individual Agency:** Analyze the interaction between institutional AI posture (QGN) and personal agency (QEA_14) to see if top-down AI deployment strategies suppress or promote an employee's sense of control over their career path. This seeks to understand if formal company strategy serves as a psychological anchor or a source of alienation.
+
+4. **The "Error Sensitivity" Threshold:** Examine how the frequency of AI output errors (QGS) correlates with perceived job security. The goal is to test the hypothesis that employees who experience high error rates are more likely to view their roles as "AI-proof" due to the necessity of human oversight.
+
+5. **Generational Divergence in Task Autonomy Comfort:** Map the specific task categories (QGM) that different generational cohorts (HidQDC) are willing to delegate to autonomous AI. This aims to uncover if specific cohorts prioritize delegating creative vs. analytical tasks as a defensive mechanism to protect their perceived unique value.
+
+6. **Incentive Alignment and AI Disclosure:** Explore the relationship between types of AI incentives (QKC) and the honesty of AI disclosure behaviors (QGG). The objective is to determine if performance-based incentives (financial/career) encourage "overstating" AI capabilities, thereby creating a disconnect between actual productivity and perceived job security.
+
+7. **The "Accountability Gap" as a Deterrent:** Investigate the relationship between the fear of accountability (QF_4) and the willingness to utilize AI for complex work (QGP_3). This focuses on whether the risk of professional liability acts as the primary psychological barrier to adopting AI for high-stakes decision-making.
+
+8. **Managerial vs. Individual Contributor Perception Divergence:** Compare how job level (QDG/HIDDG) influences the interpretation of "changing nature of work." The goal is to identify if managers view AI-driven changes through a lens of organizational optimization, while individual contributors view the same changes as a threat to job security.
+
+9. **The Role of Psychological Safety in AI Experimentation:** Evaluate the impact of company culture (QGO), specifically "learning from mistakes," on the adoption of AI for creative tasks (QGP_2). This seeks to isolate whether a supportive failure culture is a stronger predictor of positive AI integration than technical training or tool access.
+
+10. **Predictive Validity of "Not Sure" Responses:** Analyze the demographic and organizational profile of respondents who consistently choose "Not Sure" for job security questions. The goal is to determine if this response indicates a lack of organizational transparency or a state of "AI apathy" among specific employee segments.
+\end{IDEAS}
+
+
+###### PROMPT BEGINS ########
+Human: 
+**Role**: Senior Scientific Lead and Final Decision Maker.
+**Objective**: Review the ideas prioritized by the three independent Reviewer Agents and select the single most promising research project to proceed to the implementation phase.
+
+**Context**: 
+A pool of 10 initial ideas was generated. Three independent agents have evaluated those ideas and identified their top selections (provided below). Your role is to serve as the final filter, selecting the "Best of the Best" based on scientific merit and the constraints of the dataset.
+
+**Evaluation Criteria**:
+1. **Scientific Consensus**: Does an idea appear as a top choice for multiple reviewers?
+2. **Execution Readiness**: Given the 'Data Description,' which idea is most likely to produce a valid, non-erroneous scientific result?
+3. **Strategic Impact**: Which project offers the most meaningful contribution to the Foundation's research goals?
+4. **Novelty vs Previous Work**: The selected idea should be as different as possible from any previous ideas to ensure new scientific contributions.
+
+**Operational Constraints**:
+- **Selection Only**: You must select exactly one idea.
+- **Strict Fidelity**: Do not modify, rephrase, or correct the original text of the idea. 
+- **Zero Commentary**: Do not justify your decision, provide pros/cons, or offer any introductory text.
+- **Output Integrity**: Provide **only** the text of the selected idea within the required tags.
+- The selected idea must contain a title and a description of the idea
+
+Data description:
+# IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+
+Ideas:
+Idea selected1: **The Paradox of High-Utility Adoption:** Investigate whether employees who report the highest time savings (QGI) and frequent AI usage (QC) simultaneously report higher job insecurity (QEA_2) due to the perception of AI as a replacement rather than an augmentation tool. This aims to determine if "efficiency gains" paradoxically signal individual obsolescence to the worker.
+Idea selected2: **The Paradox of High-Utility Adoption:** Investigate whether employees who report the highest time savings (QGI) and frequent AI usage (QC) simultaneously report higher job insecurity (QEA_2) due to the perception of AI as a replacement rather than an augmentation tool. This aims to determine if "efficiency gains" paradoxically signal individual obsolescence to the worker.
+Idea selected3: **The Paradox of High-Utility Adoption:** Investigate whether employees who report the highest time savings (QGI) and frequent AI usage (QC) simultaneously report higher job insecurity (QEA_2) due to the perception of AI as a replacement rather than an augmentation tool. This aims to determine if "efficiency gains" paradoxically signal individual obsolescence to the worker.
+
+
+
+
+
+
+
+Respond in exactly the following format:
+
+\\begin{IDEA}
+<IDEA>
+\\end{IDEA}
+
+In <IDEA>, put the idea you have selected
+
+###### PROMPT ENDS ########
+
+\begin{IDEA}
+**The Paradox of High-Utility Adoption:** Investigate whether employees who report the highest time savings (QGI) and frequent AI usage (QC) simultaneously report higher job insecurity (QEA_2) due to the perception of AI as a replacement rather than an augmentation tool. This aims to determine if "efficiency gains" paradoxically signal individual obsolescence to the worker.
+\end{IDEA}
+
+
+###### PROMPT BEGINS ########
+Human: 
+**Role**: Skeptical Red Team Reviewer and Scientific Auditor.
+**Objective**: Conduct a rigorous "Stress Test" on the proposed research idea to identify fatal flaws, feasibility gaps, and potential scientific "slop."
+
+**Evaluation Criteria**:
+1. **Data-Hypothesis Alignment**: Does the dataset described actually contain the variables and precision required to test this idea?
+2. **Feasibility & Noise**: Is the signal-to-noise ratio realistic? Is the idea too ambitious for the provided data?
+3. **Redundancy Check**: Does this idea simply repeat a "standard" analysis, or is it a meaningful contribution?
+4. **Physical Reality**: Does the idea violate any constraints or physical laws mentioned in the data description?
+
+**Task**:
+- Critically analyze the "Current Idea" against the "Data Description."
+- If the idea is **unfeasible**, explicitly state why and suggest a "Strategic Pivot" (a new direction that *is* supported by the data).
+- If the idea is **feasible but weak**, identify the specific "weak links" in the logic.
+- Compare it against "Previous Ideas" to ensure the refinement loop is moving forward, not backward.
+
+**Operational Constraints**:
+- **Tone**: Be professional, objective, and intellectually demanding. 
+- **Brevity**: Use high-density bullet points. Do not waste words on pleasantries.
+- **Strict Adherence**: Every criticism must be grounded in the provided 'Data Description.'
+
+**Input Data**:
+- **Data Description**: # IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+- **Current Idea**: **The Paradox of High-Utility Adoption:** Investigate whether employees who report the highest time savings (QGI) and frequent AI usage (QC) simultaneously report higher job insecurity (QEA_2) due to the perception of AI as a replacement rather than an augmentation tool. This aims to determine if "efficiency gains" paradoxically signal individual obsolescence to the worker.    
+
+Respond in the following format:
+
+\\begin{CRITIC}
+<CRITIC>
+\\end{CRITIC}
+
+In <CRITIC>, put your criticism to the idea. Try to be brief in the description.
+
+###### PROMPT ENDS ########
+
+\begin{CRITIC}
+*   **Confounding Variable Bias:** The "Paradox" hypothesis fails to account for the *nature* of the AI usage. High-frequency users (QC) and high-time-savers (QGI) are likely in roles where AI is already highly integrated (e.g., IT, Software Dev). These roles may have higher baseline job security or different market dynamics than roles where AI is nascent. The model risks attributing "obsolescence anxiety" to efficiency gains when it is actually a function of job role (QDH) or industry (QDB).
+*   **Directionality/Reverse Causality:** The data is cross-sectional. It is equally plausible that employees who *already* feel insecure (QEA_2) are forced to use AI more frequently (QC) to prove their value or meet increased output demands, rather than AI usage causing the insecurity.
+*   **Measurement Noise:** `QGI` (hours saved) is a subjective self-report. High-frequency users may overestimate time savings due to cognitive bias, while those feeling insecure may downplay efficiency to avoid being "automated away." The signal-to-noise ratio here is likely too low to support a causal "paradox" claim.
+*   **Strategic Pivot:** Instead of a "Paradox" claim, pivot to a **"Predictive Profile of AI-Driven Role Evolution."** Use the `QGP` (past) and `QGU` (future) indices to cluster respondents into "Augmented" vs. "Displaced" profiles. Test if the *Company Enablers* (QKB) act as a moderator that shifts the relationship between high AI usage and job security from negative to positive. This moves from a speculative "paradox" to a actionable organizational analysis supported by the `QKB` and `QGO` (culture) variables.
+\end{CRITIC}
+
+
+###### PROMPT BEGINS ########
+Human: 
+**Role**: Senior Research Scientific.
+**Objective**: Synthesize a primary research idea with expert criticism to produce a refined, groundbreaking, and technically feasible scientific objective.
+
+**Task**:
+You are in an iterative refinement loop (Iteration: 0). Your goal is to take the "Previous Idea," pass it through the filter of the "Critiques," and produce a "Hardened Idea" that is more scientifically rigorous and original than its predecessor.
+
+**Refinement Principles**:
+1. **Address Caveats**: If the critic mentioned a lack of feasibility, adjust the scope of the idea to fit the 'Data Description.'
+2. **Increase Specificity**: Move away from generic goals. Use the statistics and variables found in the data description to make the idea more concrete.
+3. **Internalize Feedback**: Do not explicitly mention the criticism or explain your changes. Instead, weave the solutions directly into the new version of the idea.
+4. **Maintain Grounding**: Ensure the "groundbreaking" aspect remains physically possible within the provided dataset's constraints.
+
+**Operational Constraints**:
+- **Brevity**: Keep the description concise but high-density (max 6 sentences).
+- **Format**: Do not include introductory text or meta-commentary about the process.
+- **Fidelity**: Stick strictly to the guidelines and physical realities described in the data description.
+- The idea must contain a title and a description of the idea
+
+**Input Data**:
+- **Data Description**: # IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+- **Critical Feedback**: *   **Confounding Variable Bias:** The "Paradox" hypothesis fails to account for the *nature* of the AI usage. High-frequency users (QC) and high-time-savers (QGI) are likely in roles where AI is already highly integrated (e.g., IT, Software Dev). These roles may have higher baseline job security or different market dynamics than roles where AI is nascent. The model risks attributing "obsolescence anxiety" to efficiency gains when it is actually a function of job role (QDH) or industry (QDB).
+*   **Directionality/Reverse Causality:** The data is cross-sectional. It is equally plausible that employees who *already* feel insecure (QEA_2) are forced to use AI more frequently (QC) to prove their value or meet increased output demands, rather than AI usage causing the insecurity.
+*   **Measurement Noise:** `QGI` (hours saved) is a subjective self-report. High-frequency users may overestimate time savings due to cognitive bias, while those feeling insecure may downplay efficiency to avoid being "automated away." The signal-to-noise ratio here is likely too low to support a causal "paradox" claim.
+*   **Strategic Pivot:** Instead of a "Paradox" claim, pivot to a **"Predictive Profile of AI-Driven Role Evolution."** Use the `QGP` (past) and `QGU` (future) indices to cluster respondents into "Augmented" vs. "Displaced" profiles. Test if the *Company Enablers* (QKB) act as a moderator that shifts the relationship between high AI usage and job security from negative to positive. This moves from a speculative "paradox" to a actionable organizational analysis supported by the `QKB` and `QGO` (culture) variables.
+
+Respond in the following format:
+
+\\begin{IDEA}
+<IDEA>
+\\end{IDEA}
+
+In <IDEA>, put the refined idea. 
+
+###### PROMPT ENDS ########
+
+\begin{IDEA}
+**Title: The Moderating Role of Organizational Enablers in AI-Driven Role Evolution**
+
+This study develops a typology of employee experiences by clustering respondents into "Augmented" (high creative/complex task growth) and "Displaced" (high repetitive task growth) profiles using the `QGP` and `QGU` indices. By controlling for industry (`QDB`) and job profile (`HIDDG`) to isolate role-specific baseline dynamics, the analysis evaluates whether perceived job security (`QEA_2`, `QEB_2`) is driven by individual AI usage frequency (`QC`) or by the presence of structural organizational support. The core objective is to test if high-scoring `QKB` (company enablers) and `QGO` (culture) variables act as significant moderators that decouple high AI integration from job insecurity. Utilizing a Random Forest permutation importance framework and mediation analysis, the research distinguishes between "anxiety-driven" AI adoption and "growth-driven" adoption. This approach shifts the focus from simple usage correlations to identifying the specific organizational configurations that successfully transition employees from task displacement to professional augmentation.
+\end{IDEA}
+
+
+###### PROMPT BEGINS ########
+Human: 
+**Role**: Skeptical Red Team Reviewer and Scientific Auditor.
+**Objective**: Conduct a rigorous "Stress Test" on the proposed research idea to identify fatal flaws, feasibility gaps, and potential scientific "slop."
+
+**Evaluation Criteria**:
+1. **Data-Hypothesis Alignment**: Does the dataset described actually contain the variables and precision required to test this idea?
+2. **Feasibility & Noise**: Is the signal-to-noise ratio realistic? Is the idea too ambitious for the provided data?
+3. **Redundancy Check**: Does this idea simply repeat a "standard" analysis, or is it a meaningful contribution?
+4. **Physical Reality**: Does the idea violate any constraints or physical laws mentioned in the data description?
+
+**Task**:
+- Critically analyze the "Current Idea" against the "Data Description."
+- If the idea is **unfeasible**, explicitly state why and suggest a "Strategic Pivot" (a new direction that *is* supported by the data).
+- If the idea is **feasible but weak**, identify the specific "weak links" in the logic.
+- Compare it against "Previous Ideas" to ensure the refinement loop is moving forward, not backward.
+
+**Operational Constraints**:
+- **Tone**: Be professional, objective, and intellectually demanding. 
+- **Brevity**: Use high-density bullet points. Do not waste words on pleasantries.
+- **Strict Adherence**: Every criticism must be grounded in the provided 'Data Description.'
+
+**Input Data**:
+- **Data Description**: # IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+- **Current Idea**: **Title: The Moderating Role of Organizational Enablers in AI-Driven Role Evolution**
+
+This study develops a typology of employee experiences by clustering respondents into "Augmented" (high creative/complex task growth) and "Displaced" (high repetitive task growth) profiles using the `QGP` and `QGU` indices. By controlling for industry (`QDB`) and job profile (`HIDDG`) to isolate role-specific baseline dynamics, the analysis evaluates whether perceived job security (`QEA_2`, `QEB_2`) is driven by individual AI usage frequency (`QC`) or by the presence of structural organizational support. The core objective is to test if high-scoring `QKB` (company enablers) and `QGO` (culture) variables act as significant moderators that decouple high AI integration from job insecurity. Utilizing a Random Forest permutation importance framework and mediation analysis, the research distinguishes between "anxiety-driven" AI adoption and "growth-driven" adoption. This approach shifts the focus from simple usage correlations to identifying the specific organizational configurations that successfully transition employees from task displacement to professional augmentation.
+- **Previous Versions (for context)**: 
+
+
+Iteration 0:
+Idea: **Title: The Moderating Role of Organizational Enablers in AI-Driven Role Evolution**
+
+This study develops a typology of employee experiences by clustering respondents into "Augmented" (high creative/complex task growth) and "Displaced" (high repetitive task growth) profiles using the `QGP` and `QGU` indices. By controlling for industry (`QDB`) and job profile (`HIDDG`) to isolate role-specific baseline dynamics, the analysis evaluates whether perceived job security (`QEA_2`, `QEB_2`) is driven by individual AI usage frequency (`QC`) or by the presence of structural organizational support. The core objective is to test if high-scoring `QKB` (company enablers) and `QGO` (culture) variables act as significant moderators that decouple high AI integration from job insecurity. Utilizing a Random Forest permutation importance framework and mediation analysis, the research distinguishes between "anxiety-driven" AI adoption and "growth-driven" adoption. This approach shifts the focus from simple usage correlations to identifying the specific organizational configurations that successfully transition employees from task displacement to professional augmentation.
+    
+
+Respond in the following format:
+
+\\begin{CRITIC}
+<CRITIC>
+\\end{CRITIC}
+
+In <CRITIC>, put your criticism to the idea. Try to be brief in the description.
+
+###### PROMPT ENDS ########
+
+\begin{CRITIC}
+*   **Data-Hypothesis Mismatch (The "Typology" Fallacy):** The proposed clustering of "Augmented" vs. "Displaced" profiles using `QGP` and `QGU` is statistically fragile. These variables measure *perceived impact* on task volume, not actual job displacement or role evolution. Clustering on subjective perceptions of "repetitive" vs. "creative" work will likely capture individual sentiment (optimism/pessimism) rather than objective role transformation.
+*   **Feasibility Gap (Mediation Complexity):** The mediation analysis (Usage → Attitudes → Security) is likely to suffer from severe endogeneity. Employees who feel insecure (`QEA_2`) are inherently more likely to report negative attitudes (`QHD`) and lower usage frequency (`QC`). The cross-sectional nature of the data makes it impossible to establish the temporal precedence required for a valid mediation model.
+*   **Weak Link (Moderation Logic):** The hypothesis that `QKB` (Company Enablers) "decouples" AI integration from insecurity assumes these variables are independent. However, `QKB` items (e.g., "leadership support") are likely confounded by the same organizational culture that drives AI adoption. You are measuring the *perception* of support, not the *presence* of structural policy.
+*   **Redundancy:** The "Augmented vs. Displaced" typology is a rebranding of a standard sentiment analysis. Without objective performance or HR-level data, this remains a study of "how people feel about AI," not "how AI changes work."
+*   **Strategic Pivot:** Abandon the "Typology" clustering. Instead, perform a **Divergence Analysis**: Compare the gap between `QEA_2` (current) and `QEB_2` (future) as the dependent variable. Use the `QKB` (Enablers) and `QGO` (Culture) variables as predictors to see which specific organizational factors *narrow* the gap between current anxiety and future optimism. This focuses on the *delta* of sentiment rather than static, noisy clusters.
+\end{CRITIC}
+
+
+###### PROMPT BEGINS ########
+Human: 
+**Role**: Senior Research Scientific.
+**Objective**: Synthesize a primary research idea with expert criticism to produce a refined, groundbreaking, and technically feasible scientific objective.
+
+**Task**:
+You are in an iterative refinement loop (Iteration: 1). Your goal is to take the "Previous Idea," pass it through the filter of the "Critiques," and produce a "Hardened Idea" that is more scientifically rigorous and original than its predecessor.
+
+**Refinement Principles**:
+1. **Address Caveats**: If the critic mentioned a lack of feasibility, adjust the scope of the idea to fit the 'Data Description.'
+2. **Increase Specificity**: Move away from generic goals. Use the statistics and variables found in the data description to make the idea more concrete.
+3. **Internalize Feedback**: Do not explicitly mention the criticism or explain your changes. Instead, weave the solutions directly into the new version of the idea.
+4. **Maintain Grounding**: Ensure the "groundbreaking" aspect remains physically possible within the provided dataset's constraints.
+
+**Operational Constraints**:
+- **Brevity**: Keep the description concise but high-density (max 6 sentences).
+- **Format**: Do not include introductory text or meta-commentary about the process.
+- **Fidelity**: Stick strictly to the guidelines and physical realities described in the data description.
+- The idea must contain a title and a description of the idea
+
+**Input Data**:
+- **Data Description**: # IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+- **Previous Versions**: 
+
+
+Iteration 0:
+Idea: **Title: The Moderating Role of Organizational Enablers in AI-Driven Role Evolution**
+
+This study develops a typology of employee experiences by clustering respondents into "Augmented" (high creative/complex task growth) and "Displaced" (high repetitive task growth) profiles using the `QGP` and `QGU` indices. By controlling for industry (`QDB`) and job profile (`HIDDG`) to isolate role-specific baseline dynamics, the analysis evaluates whether perceived job security (`QEA_2`, `QEB_2`) is driven by individual AI usage frequency (`QC`) or by the presence of structural organizational support. The core objective is to test if high-scoring `QKB` (company enablers) and `QGO` (culture) variables act as significant moderators that decouple high AI integration from job insecurity. Utilizing a Random Forest permutation importance framework and mediation analysis, the research distinguishes between "anxiety-driven" AI adoption and "growth-driven" adoption. This approach shifts the focus from simple usage correlations to identifying the specific organizational configurations that successfully transition employees from task displacement to professional augmentation.
+
+- **Critical Feedback**: *   **Data-Hypothesis Mismatch (The "Typology" Fallacy):** The proposed clustering of "Augmented" vs. "Displaced" profiles using `QGP` and `QGU` is statistically fragile. These variables measure *perceived impact* on task volume, not actual job displacement or role evolution. Clustering on subjective perceptions of "repetitive" vs. "creative" work will likely capture individual sentiment (optimism/pessimism) rather than objective role transformation.
+*   **Feasibility Gap (Mediation Complexity):** The mediation analysis (Usage → Attitudes → Security) is likely to suffer from severe endogeneity. Employees who feel insecure (`QEA_2`) are inherently more likely to report negative attitudes (`QHD`) and lower usage frequency (`QC`). The cross-sectional nature of the data makes it impossible to establish the temporal precedence required for a valid mediation model.
+*   **Weak Link (Moderation Logic):** The hypothesis that `QKB` (Company Enablers) "decouples" AI integration from insecurity assumes these variables are independent. However, `QKB` items (e.g., "leadership support") are likely confounded by the same organizational culture that drives AI adoption. You are measuring the *perception* of support, not the *presence* of structural policy.
+*   **Redundancy:** The "Augmented vs. Displaced" typology is a rebranding of a standard sentiment analysis. Without objective performance or HR-level data, this remains a study of "how people feel about AI," not "how AI changes work."
+*   **Strategic Pivot:** Abandon the "Typology" clustering. Instead, perform a **Divergence Analysis**: Compare the gap between `QEA_2` (current) and `QEB_2` (future) as the dependent variable. Use the `QKB` (Enablers) and `QGO` (Culture) variables as predictors to see which specific organizational factors *narrow* the gap between current anxiety and future optimism. This focuses on the *delta* of sentiment rather than static, noisy clusters.
+
+Respond in the following format:
+
+\\begin{IDEA}
+<IDEA>
+\\end{IDEA}
+
+In <IDEA>, put the refined idea. 
+
+###### PROMPT ENDS ########
+
+\begin{IDEA}
+**Title: Quantifying Sentiment Volatility: Determinants of the Delta between Current and Future AI-Driven Job Security**
+
+This study shifts the focus from static sentiment clustering to the analysis of "Security Volatility"—the numerical delta between current (`QEA_2`) and 3-year expected (`QEB_2`) job security perceptions. By treating the transition from current to future sentiment as the dependent variable, the research isolates the factors that stabilize or destabilize employee outlooks amid AI integration. Using OLS regression and Random Forest permutation importance, we evaluate the predictive power of specific organizational enablers (`QKB`) and cultural markers (`QGO`) in narrowing the gap between current anxiety and future professional optimism. To mitigate endogeneity, the model controls for individual "AI-Sentiment" profiles—derived from the binary `QHD` emotional attitude block—to isolate structural policy influence from baseline cognitive bias. The objective is to identify which specific company interventions, such as "employee involvement in development" (QKB_1_11) or "regular training" (QKB_1_4), serve as the strongest predictors of positive sentiment trajectory across distinct job profiles (`HIDDG`) and sectors (`QDB`). This approach moves beyond descriptive sentiment analysis to identify actionable organizational configurations that foster long-term job confidence.
+\end{IDEA}
+
+
+###### PROMPT BEGINS ########
+Human: 
+**Role**: Skeptical Red Team Reviewer and Scientific Auditor.
+**Objective**: Conduct a rigorous "Stress Test" on the proposed research idea to identify fatal flaws, feasibility gaps, and potential scientific "slop."
+
+**Evaluation Criteria**:
+1. **Data-Hypothesis Alignment**: Does the dataset described actually contain the variables and precision required to test this idea?
+2. **Feasibility & Noise**: Is the signal-to-noise ratio realistic? Is the idea too ambitious for the provided data?
+3. **Redundancy Check**: Does this idea simply repeat a "standard" analysis, or is it a meaningful contribution?
+4. **Physical Reality**: Does the idea violate any constraints or physical laws mentioned in the data description?
+
+**Task**:
+- Critically analyze the "Current Idea" against the "Data Description."
+- If the idea is **unfeasible**, explicitly state why and suggest a "Strategic Pivot" (a new direction that *is* supported by the data).
+- If the idea is **feasible but weak**, identify the specific "weak links" in the logic.
+- Compare it against "Previous Ideas" to ensure the refinement loop is moving forward, not backward.
+
+**Operational Constraints**:
+- **Tone**: Be professional, objective, and intellectually demanding. 
+- **Brevity**: Use high-density bullet points. Do not waste words on pleasantries.
+- **Strict Adherence**: Every criticism must be grounded in the provided 'Data Description.'
+
+**Input Data**:
+- **Data Description**: # IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+- **Current Idea**: **Title: Quantifying Sentiment Volatility: Determinants of the Delta between Current and Future AI-Driven Job Security**
+
+This study shifts the focus from static sentiment clustering to the analysis of "Security Volatility"—the numerical delta between current (`QEA_2`) and 3-year expected (`QEB_2`) job security perceptions. By treating the transition from current to future sentiment as the dependent variable, the research isolates the factors that stabilize or destabilize employee outlooks amid AI integration. Using OLS regression and Random Forest permutation importance, we evaluate the predictive power of specific organizational enablers (`QKB`) and cultural markers (`QGO`) in narrowing the gap between current anxiety and future professional optimism. To mitigate endogeneity, the model controls for individual "AI-Sentiment" profiles—derived from the binary `QHD` emotional attitude block—to isolate structural policy influence from baseline cognitive bias. The objective is to identify which specific company interventions, such as "employee involvement in development" (QKB_1_11) or "regular training" (QKB_1_4), serve as the strongest predictors of positive sentiment trajectory across distinct job profiles (`HIDDG`) and sectors (`QDB`). This approach moves beyond descriptive sentiment analysis to identify actionable organizational configurations that foster long-term job confidence.
+- **Previous Versions (for context)**: 
+
+
+
+Iteration 0:
+Idea: **Title: The Moderating Role of Organizational Enablers in AI-Driven Role Evolution**
+
+This study develops a typology of employee experiences by clustering respondents into "Augmented" (high creative/complex task growth) and "Displaced" (high repetitive task growth) profiles using the `QGP` and `QGU` indices. By controlling for industry (`QDB`) and job profile (`HIDDG`) to isolate role-specific baseline dynamics, the analysis evaluates whether perceived job security (`QEA_2`, `QEB_2`) is driven by individual AI usage frequency (`QC`) or by the presence of structural organizational support. The core objective is to test if high-scoring `QKB` (company enablers) and `QGO` (culture) variables act as significant moderators that decouple high AI integration from job insecurity. Utilizing a Random Forest permutation importance framework and mediation analysis, the research distinguishes between "anxiety-driven" AI adoption and "growth-driven" adoption. This approach shifts the focus from simple usage correlations to identifying the specific organizational configurations that successfully transition employees from task displacement to professional augmentation.
+
+
+Iteration 1:
+Idea: **Title: Quantifying Sentiment Volatility: Determinants of the Delta between Current and Future AI-Driven Job Security**
+
+This study shifts the focus from static sentiment clustering to the analysis of "Security Volatility"—the numerical delta between current (`QEA_2`) and 3-year expected (`QEB_2`) job security perceptions. By treating the transition from current to future sentiment as the dependent variable, the research isolates the factors that stabilize or destabilize employee outlooks amid AI integration. Using OLS regression and Random Forest permutation importance, we evaluate the predictive power of specific organizational enablers (`QKB`) and cultural markers (`QGO`) in narrowing the gap between current anxiety and future professional optimism. To mitigate endogeneity, the model controls for individual "AI-Sentiment" profiles—derived from the binary `QHD` emotional attitude block—to isolate structural policy influence from baseline cognitive bias. The objective is to identify which specific company interventions, such as "employee involvement in development" (QKB_1_11) or "regular training" (QKB_1_4), serve as the strongest predictors of positive sentiment trajectory across distinct job profiles (`HIDDG`) and sectors (`QDB`). This approach moves beyond descriptive sentiment analysis to identify actionable organizational configurations that foster long-term job confidence.
+    
+
+Respond in the following format:
+
+\\begin{CRITIC}
+<CRITIC>
+\\end{CRITIC}
+
+In <CRITIC>, put your criticism to the idea. Try to be brief in the description.
+
+###### PROMPT ENDS ########
+
+\begin{CRITIC}
+*   **Data-Hypothesis Mismatch**: The "Security Volatility" delta ($\Delta = QEB_2 - QEA_2$) is mathematically flawed. Both variables are ordinal Likert scales (Significantly negative to Significantly positive). Subtracting these creates a non-linear, non-interval metric that conflates "stability" with "directionality." A respondent moving from "No impact" to "Slightly positive" is treated identically to one moving from "Significantly negative" to "No impact," despite vastly different psychological states.
+*   **Feasibility & Noise**: The "AI-Sentiment" profile control (QHD) is a high-dimensional binary block (16 variables). Using these as controls in an OLS regression alongside organizational enablers (QKB) will likely lead to severe multicollinearity and overfitting, given the sample size ($N=2,603$).
+*   **Redundancy Check**: The shift from Iteration 0 to Iteration 1 is largely semantic. You have moved from "moderating role" to "delta analysis," but the underlying predictors (QKB, QGO) and outcomes (QEA, QEB) remain identical. You are still essentially regressing sentiment on organizational support.
+*   **Strategic Pivot**: Abandon the "Delta" variable. Instead, use **Multinomial Logistic Regression** or **Latent Class Analysis (LCA)** to categorize respondents into "Optimistic-Stable," "Pessimistic-Declining," and "Anxious-Improving" groups. Use the organizational enablers (QKB) and culture (QGO) as predictors to determine the probability of an employee falling into a "Stable/Positive" class versus an "Anxious/Declining" class. This respects the ordinal nature of the data and avoids the invalid arithmetic of Likert-scale subtraction.
+\end{CRITIC}
+
+
+###### PROMPT BEGINS ########
+Human: 
+**Role**: Senior Research Scientific.
+**Objective**: Synthesize a primary research idea with expert criticism to produce a refined, groundbreaking, and technically feasible scientific objective.
+
+**Task**:
+You are in an iterative refinement loop (Iteration: 2). Your goal is to take the "Previous Idea," pass it through the filter of the "Critiques," and produce a "Hardened Idea" that is more scientifically rigorous and original than its predecessor.
+
+**Refinement Principles**:
+1. **Address Caveats**: If the critic mentioned a lack of feasibility, adjust the scope of the idea to fit the 'Data Description.'
+2. **Increase Specificity**: Move away from generic goals. Use the statistics and variables found in the data description to make the idea more concrete.
+3. **Internalize Feedback**: Do not explicitly mention the criticism or explain your changes. Instead, weave the solutions directly into the new version of the idea.
+4. **Maintain Grounding**: Ensure the "groundbreaking" aspect remains physically possible within the provided dataset's constraints.
+
+**Operational Constraints**:
+- **Brevity**: Keep the description concise but high-density (max 6 sentences).
+- **Format**: Do not include introductory text or meta-commentary about the process.
+- **Fidelity**: Stick strictly to the guidelines and physical realities described in the data description.
+- The idea must contain a title and a description of the idea
+
+**Input Data**:
+- **Data Description**: # IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+- **Previous Versions**: 
+
+
+
+Iteration 0:
+Idea: **Title: The Moderating Role of Organizational Enablers in AI-Driven Role Evolution**
+
+This study develops a typology of employee experiences by clustering respondents into "Augmented" (high creative/complex task growth) and "Displaced" (high repetitive task growth) profiles using the `QGP` and `QGU` indices. By controlling for industry (`QDB`) and job profile (`HIDDG`) to isolate role-specific baseline dynamics, the analysis evaluates whether perceived job security (`QEA_2`, `QEB_2`) is driven by individual AI usage frequency (`QC`) or by the presence of structural organizational support. The core objective is to test if high-scoring `QKB` (company enablers) and `QGO` (culture) variables act as significant moderators that decouple high AI integration from job insecurity. Utilizing a Random Forest permutation importance framework and mediation analysis, the research distinguishes between "anxiety-driven" AI adoption and "growth-driven" adoption. This approach shifts the focus from simple usage correlations to identifying the specific organizational configurations that successfully transition employees from task displacement to professional augmentation.
+
+
+Iteration 1:
+Idea: **Title: Quantifying Sentiment Volatility: Determinants of the Delta between Current and Future AI-Driven Job Security**
+
+This study shifts the focus from static sentiment clustering to the analysis of "Security Volatility"—the numerical delta between current (`QEA_2`) and 3-year expected (`QEB_2`) job security perceptions. By treating the transition from current to future sentiment as the dependent variable, the research isolates the factors that stabilize or destabilize employee outlooks amid AI integration. Using OLS regression and Random Forest permutation importance, we evaluate the predictive power of specific organizational enablers (`QKB`) and cultural markers (`QGO`) in narrowing the gap between current anxiety and future professional optimism. To mitigate endogeneity, the model controls for individual "AI-Sentiment" profiles—derived from the binary `QHD` emotional attitude block—to isolate structural policy influence from baseline cognitive bias. The objective is to identify which specific company interventions, such as "employee involvement in development" (QKB_1_11) or "regular training" (QKB_1_4), serve as the strongest predictors of positive sentiment trajectory across distinct job profiles (`HIDDG`) and sectors (`QDB`). This approach moves beyond descriptive sentiment analysis to identify actionable organizational configurations that foster long-term job confidence.
+
+- **Critical Feedback**: *   **Data-Hypothesis Mismatch**: The "Security Volatility" delta ($\Delta = QEB_2 - QEA_2$) is mathematically flawed. Both variables are ordinal Likert scales (Significantly negative to Significantly positive). Subtracting these creates a non-linear, non-interval metric that conflates "stability" with "directionality." A respondent moving from "No impact" to "Slightly positive" is treated identically to one moving from "Significantly negative" to "No impact," despite vastly different psychological states.
+*   **Feasibility & Noise**: The "AI-Sentiment" profile control (QHD) is a high-dimensional binary block (16 variables). Using these as controls in an OLS regression alongside organizational enablers (QKB) will likely lead to severe multicollinearity and overfitting, given the sample size ($N=2,603$).
+*   **Redundancy Check**: The shift from Iteration 0 to Iteration 1 is largely semantic. You have moved from "moderating role" to "delta analysis," but the underlying predictors (QKB, QGO) and outcomes (QEA, QEB) remain identical. You are still essentially regressing sentiment on organizational support.
+*   **Strategic Pivot**: Abandon the "Delta" variable. Instead, use **Multinomial Logistic Regression** or **Latent Class Analysis (LCA)** to categorize respondents into "Optimistic-Stable," "Pessimistic-Declining," and "Anxious-Improving" groups. Use the organizational enablers (QKB) and culture (QGO) as predictors to determine the probability of an employee falling into a "Stable/Positive" class versus an "Anxious/Declining" class. This respects the ordinal nature of the data and avoids the invalid arithmetic of Likert-scale subtraction.
+
+Respond in the following format:
+
+\\begin{IDEA}
+<IDEA>
+\\end{IDEA}
+
+In <IDEA>, put the refined idea. 
+
+###### PROMPT ENDS ########
+
+\begin{IDEA}
+**Title: Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability**
+
+This study replaces interval-based delta analysis with Latent Class Analysis (LCA) to categorize the 2,603 respondents into distinct psychological trajectory classes (e.g., "Resiliently Optimistic," "Anxiously Declining," and "Stagnant Neutral") based on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security. By applying a multinomial logistic regression, we determine how specific organizational enablers (`QKB`) and cultural attributes (`QGO`)—encoded as composite indices—predict membership in the "Resiliently Optimistic" versus "Anxiously Declining" classes. To address multicollinearity, we condense the 16 binary `QHD` emotional attitude items into a lower-dimensional latent "Affective Disposition" score, which serves as a covariate alongside baseline job profile (`HIDDG`) and sector (`QDB`). The research objective is to isolate the structural configurations—specifically, the interaction between "employee involvement in development" (QKB_1_11) and "regular training" (QKB_1_4)—that statistically increase the probability of an employee occupying a positive stability class. This approach provides a rigorous, non-linear framework for identifying the specific organizational policies that effectively decouple AI-driven task evolution from perceived job displacement.
+\end{IDEA}
+
