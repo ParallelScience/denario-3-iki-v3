@@ -98,14 +98,11 @@ def main():
         print("\nTraining Random Forest for " + outcome + "...")
         y = df[outcome]
         valid_idx = ~y.isna()
-        X_valid = df.loc[valid_idx, valid_predictors].copy()
+        X_valid = df.loc[valid_idx, valid_predictors]
         y_valid = y[valid_idx]
         if len(y_valid) < 50:
             print("Not enough valid samples for " + outcome + ".")
             continue
-        for col in X_valid.columns:
-            if X_valid[col].isna().all():
-                X_valid[col] = 0.0
         imputer = SimpleImputer(strategy='median')
         X_imp = imputer.fit_transform(X_valid)
         kf = KFold(n_splits=5, shuffle=True, random_state=42)
