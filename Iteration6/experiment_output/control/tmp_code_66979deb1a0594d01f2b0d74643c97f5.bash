@@ -1,0 +1,1 @@
+head -n 1 data/cleaned_dataset.csv | tr ',' '\n' | grep -E 'QEA_2|QEB_2'

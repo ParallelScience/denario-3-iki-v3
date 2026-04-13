@@ -1,0 +1,81 @@
+{
+    "sub_tasks": [
+        {
+            "bullet_points": [
+                "Load the raw dataset and handle missing values ('.').",
+                "Identify and print column names for QHD, QGM, QKB, QGO, and QDF blocks.",
+                "Map binary, ordinal, and categorical variables; construct composite indices for Job Security and Nature of Work.",
+                "Print missingness summaries and distributions of QEA_2 and QEB_2 after encoding.",
+                "Save the cleaned, processed dataset and the verified column name lists to disk."
+            ],
+            "sub_task": "Data Preprocessing and Feature Engineering",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Perform LCA on the joint distribution of QEA_2 and QEB_2, treating \"Not sure\" as a distinct nominal category.",
+                "Evaluate class solutions (2 through 6) using BIC and entropy; save the BIC/entropy plot.",
+                "Print conditional response probabilities for the chosen class solution to characterize psychological trajectories.",
+                "Save class membership assignments and model statistics."
+            ],
+            "sub_task": "Latent Class Trajectory Modeling",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Conduct EFA on binary QHD items using a tetrachoric correlation matrix.",
+                "Extract \"Positive Affect\" and \"Negative Affect\" factors; save the factor loading heatmap.",
+                "Calculate and print McDonald’s omega for internal consistency.",
+                "Print correlations between the \"Negative Affect\" factor and each QF deterrent item to assess potential multicollinearity."
+            ],
+            "sub_task": "Affective Disposition Dimensionality Reduction",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Use latent class membership (from Step 2) as the outcome for Elastic Net regression.",
+                "Run stratified models for job level and sector strata (n > 100); print sample sizes per stratum.",
+                "Save a coefficient plot showing top non-zero Elastic Net coefficients for the overall model and strata."
+            ],
+            "sub_task": "Granular Policy Identification via Elastic Net",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Construct interaction terms between top-ranked QKB enablers and QF deterrents (QF_4, QF_7); print interaction coefficients and FDR-adjusted p-values.",
+                "Perform multinomial logistic regression with \"Anxiously Declining\" as the reference category.",
+                "Save a forest plot of odds ratios with 95% confidence intervals for the \"Resiliently Optimistic\" class."
+            ],
+            "sub_task": "Moderation and Multinomial Logistic Regression",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Compute predicted probabilities of \"Resiliently Optimistic\" class membership across four policy scenarios (No training/No involvement, Training only, Involvement only, Both).",
+                "Generate a grouped bar chart with 95% confidence interval error bars for these scenarios.",
+                "Save the plot as a high-resolution PNG."
+            ],
+            "sub_task": "Policy Simulation and Visualization",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Print a full VIF table for the multinomial regression model, flagging VIF > 5.",
+                "Perform sensitivity analysis comparing three model variants: full sample (with \"Not sure\"), sample excluding \"Not sure\", and sample with \"Not sure\" recoded as modal response.",
+                "Print a comparison table of key odds ratios across these variants."
+            ],
+            "sub_task": "Robustness and Sensitivity Checks",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Structure the Results section with subsections corresponding to each analytical step.",
+                "Reference all saved plots by filename and include a summary table of LCA class sizes and conditional probabilities.",
+                "Provide a narrative interpretation of class labels and discuss the strongest QKB enabler effects across strata.",
+                "Synthesize all findings into a final report."
+            ],
+            "sub_task": "Final Results Synthesis",
+            "sub_task_agent": "researcher"
+        }
+    ]
+}
