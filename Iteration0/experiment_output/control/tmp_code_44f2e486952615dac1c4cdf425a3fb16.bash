@@ -1,0 +1,1 @@
+/opt/denario-venv/bin/python -m pip install statsmodels scikit-learn pandas numpy

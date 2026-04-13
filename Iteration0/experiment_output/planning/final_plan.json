@@ -1,0 +1,70 @@
+{
+    "sub_tasks": [
+        {
+            "bullet_points": [
+                "Load the dataset, treating '.' as NaN.",
+                "Identify and print exact column names for QHD, QKB, and QDF blocks.",
+                "Perform mappings for binary, ordinal, and frequency variables; encode QGR (1–4) and QGN (1–5) as ordinals.",
+                "Construct composite indices for Job Security and Nature of Work; create \"Income Rank\" by normalizing within countries.",
+                "One-hot encode nominal variables (QDA, QDB, QDH, HIDDG) and save both raw-encoded and dummy-encoded versions.",
+                "Print missing data rates per key variable and distributions of composite indices."
+            ],
+            "sub_task": "Data Preprocessing and Feature Engineering",
+            "sub_task_agent": "engineer",
+            "code_execution_timeout": 600
+        },
+        {
+            "bullet_points": [
+                "Load the processed dataset.",
+                "Perform EFA on 16 binary QHD items using polychoric correlation.",
+                "Print KMO statistic and Bartlett’s test p-value.",
+                "Generate and save a scree plot of eigenvalues.",
+                "Extract factors, print factor loadings, calculate Cronbach’s alpha, and save factor scores to the dataset."
+            ],
+            "sub_task": "Dimensionality Reduction for Affective Disposition",
+            "sub_task_agent": "engineer",
+            "code_execution_timeout": 600
+        },
+        {
+            "bullet_points": [
+                "Use current and future Job Security indices as indicators for LCA.",
+                "Estimate 2–5 class models; print model comparison table (log-likelihood, AIC, BIC, Entropy).",
+                "Generate and save a plot of class-conditional response probabilities for QEA_2 and QEB_2.",
+                "Print class size proportions and average posterior probabilities; assign and save class labels."
+            ],
+            "sub_task": "Latent Class Analysis (LCA) for Job Security Trajectories",
+            "sub_task_agent": "engineer",
+            "code_execution_timeout": 900
+        },
+        {
+            "bullet_points": [
+                "Perform multinomial logistic regression (reference: \"Stagnant Neutral\") predicting class membership.",
+                "Include interaction terms between QKB_1_11 and QKB_1_4.",
+                "Calculate VIFs; perform 5-fold cross-validation.",
+                "Print full regression table (standardized coefficients, odds ratios, 95% CIs, FDR-corrected p-values) and save to CSV.",
+                "Perform sensitivity analysis (excluding \"Not sure\" responses) and compare coefficients to the full model."
+            ],
+            "sub_task": "Statistical Modeling and Interaction Analysis",
+            "sub_task_agent": "engineer",
+            "code_execution_timeout": 1200
+        },
+        {
+            "bullet_points": [
+                "Generate a multi-panel figure: (a) latent class profiles, (b) marginal effects plot for QKB_1_11 × QKB_1_4 interaction, (c) coefficient forest plot of odds ratios, and (d) bar chart of class membership proportions.",
+                "Ensure all labels are visible and save as a high-resolution PNG."
+            ],
+            "sub_task": "Visualization of Results",
+            "sub_task_agent": "engineer",
+            "code_execution_timeout": 600
+        },
+        {
+            "bullet_points": [
+                "Synthesize quantitative findings, explicitly referencing BIC, entropy, odds ratios, interaction effects, and cross-validation accuracy.",
+                "Structure the report with subsections: (1) Affective Disposition Factor Structure, (2) Latent Class Solution and Trajectory Profiles, (3) Multinomial Regression Predictors of Class Membership, (4) Interaction Effects of Organizational Catalysts, and (5) Robustness and Sensitivity Checks.",
+                "Interpret the impact of organizational catalysts and the interaction between training and involvement on job security perceptions."
+            ],
+            "sub_task": "Final Results Reporting",
+            "sub_task_agent": "researcher"
+        }
+    ]
+}

@@ -1,0 +1,268 @@
+[
+  {
+    "name": "control_starter",
+    "content": "",
+    "timestamp": "2026-04-13 17:23:45",
+    "cost": {
+      "Agent": [
+        "control_starter"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.0009862500000000001
+      ],
+      "Prompt Tokens": [
+        3693
+      ],
+      "Completion Tokens": [
+        42
+      ],
+      "Total Tokens": [
+        3735
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "\n**Step number:** 5 out of 6.\n\n**Sub-task:** Visualization of Results\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Generate a multi-panel figure: (a) latent class profiles, (b) marginal effects plot for QKB_1_11 \u00d7 QKB_1_4 interaction, (c) coefficient forest plot of odds ratios, and (d) bar chart of class membership proportions.\n- Ensure all labels are visible and save as a high-resolution PNG.\n\n**Status:** in progress \u23f3\n",
+    "timestamp": "2026-04-13 17:23:45",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "engineer",
+    "content": "**Code Explanation:**\n\nThe code generates a comprehensive 4-panel figure summarizing the results of the Latent Class Analysis (LCA) and the multinomial logistic regression. \n- **Panel (a)** plots the mean scores for current (`QEA_2`) and expected future (`QEB_2`) job security for each latent class, illustrating their distinct trajectories. \n- **Panel (b)** visualizes the marginal effects of the interaction between \"Employee Involvement in Development\" (`QKB_1_11`) and \"Regular Training\" (`QKB_1_4`) on the probability of belonging to the \"Resiliently Optimistic\" class. It reconstructs the standardized feature space from Step 4, sets all covariates to their means, and computes the softmax probabilities using the saved regression coefficients. \n- **Panel (c)** is a forest plot displaying the Odds Ratios (OR) and 95% Confidence Intervals for the key predictors, comparing the \"Resiliently Optimistic\" and \"Anxiously Declining\" classes against the \"Stagnant Neutral\" reference class. \n- **Panel (d)** provides a horizontal bar chart of the overall class membership proportions. \n\nFinally, the script prints detailed numerical summaries (class proportions, marginal probabilities at specific standard deviations, and odds ratios) to the console to ensure the researcher agent has all the necessary quantitative data for the final report.\n\n**Python Code:**\n\n```python\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport time\nimport statsmodels.api as sm\n\ndef generate_plots():\n    plt.rcParams['text.usetex'] = False\n    \n    # Load data\n    raw_path = 'data/data_raw_encoded.csv'\n    dummy_path = 'data/data_dummy_encoded.csv'\n    res_path = 'data/mnlogit_results.csv'\n    \n    print(\"Loading data...\")\n    df_raw = pd.read_csv(raw_path, low_memory=False)\n    df_dummy = pd.read_csv(dummy_path, low_memory=False)\n    res_df = pd.read_csv(res_path)\n    \n    valid_target = df_dummy['LCA_Class_Name'].notna()\n    df_dummy = df_dummy[valid_target].copy()\n    df_raw = df_raw[valid_target].copy()\n    \n    # Setup figure\n    fig, axs = plt.subplots(2, 2, figsize=(16, 12))\n    \n    # ---------------------------------------------------------\n    # (a) Latent Class Profiles\n    # ---------------------------------------------------------\n    print(\"Generating (a) Latent Class Profiles...\")\n    ax_a = axs[0, 0]\n    \n    ind_cols = [\n        'QEA_2: Security of your current role - What impact does AI currently have in the following areas? Please rate the positive or negative impact in each area?',\n        'QEB_2: Security of your current role - What impact do you think will AI have on your work in the next 3 years? Please rate the positive or negative impact you believe AI will have in each area?'\n    ]\n    \n    profile_data = df_raw.groupby('LCA_Class_Name')[ind_cols].mean()\n    \n    markers = ['o', 's', '^', 'D', 'v']\n    for i, c in enumerate(profile_data.index):\n        ax_a.plot(['Current (QEA_2)', 'Expected (QEB_2)'], \n                  profile_data.loc[c], \n                  marker=markers[i % len(markers)], \n                  label=c, \n                  linewidth=2, markersize=8)\n        \n    ax_a.set_ylim(-2.2, 2.2)\n    ax_a.set_ylabel('Mean Impact Score (-2 to +2)')\n    ax_a.set_title('(a) Latent Class Trajectory Profiles')\n    ax_a.grid(True, linestyle='--', alpha=0.7)\n    ax_a.legend(title='Latent Class')\n    \n    # ---------------------------------------------------------\n    # (b) Marginal Effects Plot\n    # ---------------------------------------------------------\n    print(\"Generating (b) Marginal Effects Plot...\")\n    ax_b = axs[0, 1]\n    \n    qkb_11_cols = [c for c in df_dummy.columns if c.startswith('QKB_1_11:') and not c.endswith('_Not_Sure')]\n    qkb_4_cols = [c for c in df_dummy.columns if c.startswith('QKB_1_4:') and not c.endswith('_Not_Sure')]\n    qkb_11_col = qkb_11_cols[0]\n    qkb_4_col = qkb_4_cols[0]\n    base_predictors = [qkb_11_col, qkb_4_col, 'Company_Culture_Index', 'Affective_Disposition_Factor_1', 'Affective_Disposition_Factor_2']\n    \n    hiddg_cols = [c for c in df_dummy.columns if c.startswith('HIDDG_')]\n    qdb_cols = [c for c in df_dummy.columns if c.startswith('QDB_')]\n    qda_cols = [c for c in df_dummy.columns if c.startswith('QDA_')]\n    hiddg_cols = sorted(hiddg_cols)[1:] if len(hiddg_cols) > 1 else hiddg_cols\n    qdb_cols = sorted(qdb_cols)[1:] if len(qdb_cols) > 1 else qdb_cols\n    qda_cols = sorted(qda_cols)[1:] if len(qda_cols) > 1 else qda_cols\n    \n    all_predictors = base_predictors + hiddg_cols + qdb_cols + qda_cols\n    X_raw = df_dummy[all_predictors].copy()\n    for col in X_raw.columns:\n        if X_raw[col].isna().any():\n            X_raw[col] = X_raw[col].fillna(X_raw[col].median())\n            \n    for col in base_predictors:\n        X_raw[col] = (X_raw[col] - X_raw[col].mean()) / (X_raw[col].std() + 1e-09)\n        \n    X_raw['Interaction_QKB11_QKB4'] = X_raw[qkb_11_col] * X_raw[qkb_4_col]\n    X = sm.add_constant(X_raw)\n    X_mean = X.mean()\n    \n    qkb11_vals = np.linspace(-2, 2, 50)\n    qkb4_levels = [-1, 0, 1]\n    qkb4_labels = ['Low Training (-1 SD)', 'Mean Training (0 SD)', 'High Training (+1 SD)']\n    colors = ['#d62728', '#7f7f7f', '#2ca02c']\n    \n    model_classes = res_df['Class'].unique()\n    target_class = 'Resiliently Optimistic'\n    \n    if target_class in model_classes:\n        for qkb4_val, label, color in zip(qkb4_levels, qkb4_labels, colors):\n            y_probs = []\n            for qkb11_val in qkb11_vals:\n                x_vec = X_mean.copy()\n                x_vec[qkb_11_col] = qkb11_val\n                x_vec[qkb_4_col] = qkb4_val\n                x_vec['Interaction_QKB11_QKB4'] = qkb11_val * qkb4_val\n                \n                etas = {}\n                for c in model_classes:\n                    coefs = res_df[res_df['Class'] == c].set_index('Feature')['Coef']\n                    coefs = coefs.reindex(x_vec.index).fillna(0)\n                    eta = np.sum(x_vec * coefs)\n                    etas[c] = eta\n                    \n                exp_etas = {c: np.exp(etas[c]) for c in model_classes}\n                sum_exp = 1.0 + sum(exp_etas.values())\n                prob = exp_etas[target_class] / sum_exp\n                y_probs.append(prob)\n                \n            ax_b.plot(qkb11_vals, y_probs, label=label, color=color, linewidth=2)\n            \n        ax_b.set_xlabel('Employee Involvement in Dev (Standardized)')\n        ax_b.set_ylabel('Probability of \"' + target_class + '\"')\n        ax_b.set_title('(b) Marginal Effects of Involvement x Training')\n        ax_b.legend()\n        ax_b.grid(True, linestyle='--', alpha=0.7)\n    else:\n        ax_b.text(0.5, 0.5, 'Class \"' + target_class + '\" not found in model', ha='center', va='center')\n        \n    # ---------------------------------------------------------\n    # (c) Coefficient Forest Plot\n    # ---------------------------------------------------------\n    print(\"Generating (c) Coefficient Forest Plot...\")\n    ax_c = axs[1, 0]\n    \n    key_features = [\n        'Interaction_QKB11_QKB4',\n        qkb_11_col,\n        qkb_4_col,\n        'Company_Culture_Index',\n        'Affective_Disposition_Factor_1',\n        'Affective_Disposition_Factor_2'\n    ]\n    \n    feature_labels = [\n        'Involvement x Training',\n        'Employee Involvement',\n        'Regular Training',\n        'Company Culture',\n        'Positive Affect (F1)',\n        'Negative Affect (F2)'\n    ]\n    \n    # Reverse to have Interaction at the top\n    key_features = key_features[::-1]\n    feature_labels = feature_labels[::-1]\n    \n    plot_classes = ['Resiliently Optimistic', 'Anxiously Declining']\n    plot_classes = [c for c in plot_classes if c in model_classes]\n    \n    y_pos = np.arange(len(key_features))\n    offsets = [-0.15, 0.15] if len(plot_classes) == 2 else [0]\n    \n    for i, c in enumerate(plot_classes):\n        c_data = res_df[(res_df['Class'] == c) & (res_df['Feature'].isin(key_features))].copy()\n        c_data['Feature'] = pd.Categorical(c_data['Feature'], categories=key_features, ordered=True)\n        c_data = c_data.sort_values('Feature')\n        \n        ors = c_data['OR'].values\n        ci_lower = c_data['CI_Lower'].values\n        ci_upper = c_data['CI_Upper'].values\n        \n        xerr_lower = ors - ci_lower\n        xerr_upper = ci_upper - ors\n        \n        ax_c.errorbar(ors, y_pos + offsets[i], xerr=[xerr_lower, xerr_upper], \n                      fmt='o', label=c, linewidth=2, capsize=4)\n                      \n    ax_c.axvline(1.0, color='black', linestyle='--', alpha=0.7)\n    ax_c.set_yticks(y_pos)\n    ax_c.set_yticklabels(feature_labels)\n    ax_c.set_xlabel('Odds Ratio (95% CI)')\n    ax_c.set_title('(c) Predictors of Class Membership (Ref: Stagnant Neutral)')\n    ax_c.legend()\n    ax_c.grid(True, axis='x', linestyle='--', alpha=0.7)\n    \n    # ---------------------------------------------------------\n    # (d) Bar Chart of Class Proportions\n    # ---------------------------------------------------------\n    print(\"Generating (d) Bar Chart of Class Proportions...\")\n    ax_d = axs[1, 1]\n    \n    class_counts = df_raw['LCA_Class_Name'].value_counts(normalize=True) * 100\n    class_counts = class_counts.sort_values(ascending=True)\n    \n    bars = ax_d.barh(class_counts.index, class_counts.values, color='skyblue', edgecolor='black')\n    ax_d.set_xlabel('Percentage of Respondents (%)')\n    ax_d.set_title('(d) Latent Class Membership Proportions')\n    ax_d.grid(True, axis='x', linestyle='--', alpha=0.7)\n    \n    for bar in bars:\n        width = bar.get_width()\n        ax_d.text(width + 0.5, bar.get_y() + bar.get_height()/2, \n                  str(round(width, 1)) + '%', ha='left', va='center')\n                  \n    ax_d.set_xlim(0, max(class_counts.values) + 15)\n    \n    plt.tight_layout()\n    \n    timestamp = str(int(time.time()))\n    plot_filename = 'data/results_summary_1_' + timestamp + '.png'\n    plt.savefig(plot_filename, dpi=300, bbox_inches='tight')\n    plt.close()\n    \n    print(\"Multi-panel figure saved to \" + plot_filename)\n    \n    # Print some summary stats for the researcher\n    print(\"\\n--- Summary Statistics for Researcher ---\")\n    print(\"Class Proportions:\")\n    print(class_counts.to_string())\n    \n    print(\"\\nMarginal Effects (Probability of Resiliently Optimistic):\")\n    for qkb4_val, label in zip(qkb4_levels, qkb4_labels):\n        probs_print = []\n        for qkb11_val in [-2, 0, 2]:\n            x_vec = X_mean.copy()\n            x_vec[qkb_11_col] = qkb11_val\n            x_vec[qkb_4_col] = qkb4_val\n            x_vec['Interaction_QKB11_QKB4'] = qkb11_val * qkb4_val\n            etas = {}\n            for c in model_classes:\n                coefs = res_df[res_df['Class'] == c].set_index('Feature')['Coef']\n                coefs = coefs.reindex(x_vec.index).fillna(0)\n                eta = np.sum(x_vec * coefs)\n                etas[c] = eta\n            exp_etas = {c: np.exp(etas[c]) for c in model_classes}\n            sum_exp = 1.0 + sum(exp_etas.values())\n            prob = exp_etas[target_class] / sum_exp\n            probs_print.append(prob)\n        print(label + \": Inv=-2SD -> \" + str(round(probs_print[0], 4)) + \n              \", Inv=0SD -> \" + str(round(probs_print[1], 4)) + \n              \", Inv=+2SD -> \" + str(round(probs_print[2], 4)))\n              \n    print(\"\\nOdds Ratios for Key Features:\")\n    for c in plot_classes:\n        print(\"\\nClass: \" + c)\n        c_data = res_df[(res_df['Class'] == c) & (res_df['Feature'].isin(key_features))].copy()\n        c_data['Feature'] = pd.Categorical(c_data['Feature'], categories=key_features, ordered=True)\n        c_data = c_data.sort_values('Feature')\n        for _, row in c_data.iterrows():\n            feat_name = str(row['Feature'])[:30]\n            print(\"  \" + feat_name + \"... : OR=\" + str(round(row['OR'], 3)) + \n                  \" (95% CI: \" + str(round(row['CI_Lower'], 3)) + \"-\" + str(round(row['CI_Upper'], 3)) + \n                  \"), p=\" + str(round(row['FDR_P_value'], 4)))\n\nif __name__ == '__main__':\n    generate_plots()\n```",
+    "timestamp": "2026-04-13 17:26:27",
+    "cost": {
+      "Agent": [
+        "engineer"
+      ],
+      "Model": [
+        "gemini-3.1-pro-preview"
+      ],
+      "Cost": [
+        0.096676
+      ],
+      "Prompt Tokens": [
+        24962
+      ],
+      "Completion Tokens": [
+        3896
+      ],
+      "Total Tokens": [
+        28858
+      ]
+    }
+  },
+  {
+    "name": "engineer_response_evaluator",
+    "content": "**Code Explanation:**\n\nThe code generates a comprehensive 4-panel figure summarizing the results of the Latent Class Analysis (LCA) and the multinomial logistic regression. Panel (a) plots the mean scores for current (QEA_2) and expected future (QEB_2) job security for each latent class, illustrating their distinct trajectories. Panel (b) visualizes the marginal effects of the interaction between 'Employee Involvement in Development' (QKB_1_11) and 'Regular Training' (QKB_1_4) on the probability of belonging to the 'Resiliently Optimistic' class. It reconstructs the standardized feature space from Step 4, sets all covariates to their means, and computes the softmax probabilities using the saved regression coefficients. Panel (c) is a forest plot displaying the Odds Ratios (OR) and 95% Confidence Intervals for the key predictors, comparing the 'Resiliently Optimistic' and 'Anxiously Declining' classes against the 'Stagnant Neutral' reference class. Panel (d) provides a horizontal bar chart of the overall class membership proportions. Finally, the script prints detailed numerical summaries (class proportions, marginal probabilities at specific standard deviations, and odds ratios) to the console to ensure the researcher agent has all the necessary quantitative data for the final report.\n\n**Modifications:**\n\nFixed indentation, ensured all paths use the data/ directory, removed unnecessary imports, and ensured the script is wrapped in an if __name__ == '__main__': block.\n\n**Python Code:**\n\n```python\n# filename: codebase/step_5.py\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport time\nimport statsmodels.api as sm\n\ndef generate_plots():\n    plt.rcParams['text.usetex'] = False\n    raw_path = 'data/data_raw_encoded.csv'\n    dummy_path = 'data/data_dummy_encoded.csv'\n    res_path = 'data/mnlogit_results.csv'\n    print('Loading data...')\n    df_raw = pd.read_csv(raw_path, low_memory=False)\n    df_dummy = pd.read_csv(dummy_path, low_memory=False)\n    res_df = pd.read_csv(res_path)\n    valid_target = df_dummy['LCA_Class_Name'].notna()\n    df_dummy = df_dummy[valid_target].copy()\n    df_raw = df_raw[valid_target].copy()\n    fig, axs = plt.subplots(2, 2, figsize=(16, 12))\n    print('Generating (a) Latent Class Profiles...')\n    ax_a = axs[0, 0]\n    ind_cols = ['QEA_2: Security of your current role - What impact does AI currently have in the following areas? Please rate the positive or negative impact in each area?', 'QEB_2: Security of your current role - What impact do you think will AI have on your work in the next 3 years? Please rate the positive or negative impact you believe AI will have in each area?']\n    profile_data = df_raw.groupby('LCA_Class_Name')[ind_cols].mean()\n    markers = ['o', 's', '^', 'D', 'v']\n    for i, c in enumerate(profile_data.index):\n        ax_a.plot(['Current (QEA_2)', 'Expected (QEB_2)'], profile_data.loc[c], marker=markers[i % len(markers)], label=c, linewidth=2, markersize=8)\n    ax_a.set_ylim(-2.2, 2.2)\n    ax_a.set_ylabel('Mean Impact Score (-2 to +2)')\n    ax_a.set_title('(a) Latent Class Trajectory Profiles')\n    ax_a.grid(True, linestyle='--', alpha=0.7)\n    ax_a.legend(title='Latent Class')\n    print('Generating (b) Marginal Effects Plot...')\n    ax_b = axs[0, 1]\n    qkb_11_cols = [c for c in df_dummy.columns if c.startswith('QKB_1_11:') and not c.endswith('_Not_Sure')]\n    qkb_4_cols = [c for c in df_dummy.columns if c.startswith('QKB_1_4:') and not c.endswith('_Not_Sure')]\n    qkb_11_col = qkb_11_cols[0]\n    qkb_4_col = qkb_4_cols[0]\n    base_predictors = [qkb_11_col, qkb_4_col, 'Company_Culture_Index', 'Affective_Disposition_Factor_1', 'Affective_Disposition_Factor_2']\n    hiddg_cols = sorted([c for c in df_dummy.columns if c.startswith('HIDDG_')])[1:]\n    qdb_cols = sorted([c for c in df_dummy.columns if c.startswith('QDB_')])[1:]\n    qda_cols = sorted([c for c in df_dummy.columns if c.startswith('QDA_')])[1:]\n    all_predictors = base_predictors + hiddg_cols + qdb_cols + qda_cols\n    X_raw = df_dummy[all_predictors].copy()\n    for col in X_raw.columns:\n        if X_raw[col].isna().any():\n            X_raw[col] = X_raw[col].fillna(X_raw[col].median())\n    for col in base_predictors:\n        X_raw[col] = (X_raw[col] - X_raw[col].mean()) / (X_raw[col].std() + 1e-09)\n    X_raw['Interaction_QKB11_QKB4'] = X_raw[qkb_11_col] * X_raw[qkb_4_col]\n    X = sm.add_constant(X_raw)\n    X_mean = X.mean()\n    qkb11_vals = np.linspace(-2, 2, 50)\n    qkb4_levels = [-1, 0, 1]\n    qkb4_labels = ['Low Training (-1 SD)', 'Mean Training (0 SD)', 'High Training (+1 SD)']\n    colors = ['#d62728', '#7f7f7f', '#2ca02c']\n    model_classes = res_df['Class'].unique()\n    target_class = 'Resiliently Optimistic'\n    if target_class in model_classes:\n        for qkb4_val, label, color in zip(qkb4_levels, qkb4_labels, colors):\n            y_probs = []\n            for qkb11_val in qkb11_vals:\n                x_vec = X_mean.copy()\n                x_vec[qkb_11_col] = qkb11_val\n                x_vec[qkb_4_col] = qkb4_val\n                x_vec['Interaction_QKB11_QKB4'] = qkb11_val * qkb4_val\n                etas = {}\n                for c in model_classes:\n                    coefs = res_df[res_df['Class'] == c].set_index('Feature')['Coef']\n                    coefs = coefs.reindex(x_vec.index).fillna(0)\n                    eta = np.sum(x_vec * coefs)\n                    etas[c] = eta\n                exp_etas = {c: np.exp(etas[c]) for c in model_classes}\n                sum_exp = 1.0 + sum(exp_etas.values())\n                prob = exp_etas[target_class] / sum_exp\n                y_probs.append(prob)\n            ax_b.plot(qkb11_vals, y_probs, label=label, color=color, linewidth=2)\n        ax_b.set_xlabel('Employee Involvement in Dev (Standardized)')\n        ax_b.set_ylabel('Probability of \"' + target_class + '\"')\n        ax_b.set_title('(b) Marginal Effects of Involvement x Training')\n        ax_b.legend()\n        ax_b.grid(True, linestyle='--', alpha=0.7)\n    else:\n        ax_b.text(0.5, 0.5, 'Class \"' + target_class + '\" not found in model', ha='center', va='center')\n    print('Generating (c) Coefficient Forest Plot...')\n    ax_c = axs[1, 0]\n    key_features = ['Interaction_QKB11_QKB4', qkb_11_col, qkb_4_col, 'Company_Culture_Index', 'Affective_Disposition_Factor_1', 'Affective_Disposition_Factor_2']\n    feature_labels = ['Involvement x Training', 'Employee Involvement', 'Regular Training', 'Company Culture', 'Positive Affect (F1)', 'Negative Affect (F2)']\n    key_features = key_features[::-1]\n    feature_labels = feature_labels[::-1]\n    plot_classes = [c for c in ['Resiliently Optimistic', 'Anxiously Declining'] if c in model_classes]\n    y_pos = np.arange(len(key_features))\n    offsets = [-0.15, 0.15] if len(plot_classes) == 2 else [0]\n    for i, c in enumerate(plot_classes):\n        c_data = res_df[(res_df['Class'] == c) & (res_df['Feature'].isin(key_features))].copy()\n        c_data['Feature'] = pd.Categorical(c_data['Feature'], categories=key_features, ordered=True)\n        c_data = c_data.sort_values('Feature')\n        ors = c_data['OR'].values\n        ci_lower = c_data['CI_Lower'].values\n        ci_upper = c_data['CI_Upper'].values\n        ax_c.errorbar(ors, y_pos + offsets[i], xerr=[ors - ci_lower, ci_upper - ors], fmt='o', label=c, linewidth=2, capsize=4)\n    ax_c.axvline(1.0, color='black', linestyle='--', alpha=0.7)\n    ax_c.set_yticks(y_pos)\n    ax_c.set_yticklabels(feature_labels)\n    ax_c.set_xlabel('Odds Ratio (95% CI)')\n    ax_c.set_title('(c) Predictors of Class Membership (Ref: Stagnant Neutral)')\n    ax_c.legend()\n    ax_c.grid(True, axis='x', linestyle='--', alpha=0.7)\n    print('Generating (d) Bar Chart of Class Proportions...')\n    ax_d = axs[1, 1]\n    class_counts = df_raw['LCA_Class_Name'].value_counts(normalize=True) * 100\n    class_counts = class_counts.sort_values(ascending=True)\n    bars = ax_d.barh(class_counts.index, class_counts.values, color='skyblue', edgecolor='black')\n    ax_d.set_xlabel('Percentage of Respondents (%)')\n    ax_d.set_title('(d) Latent Class Membership Proportions')\n    ax_d.grid(True, axis='x', linestyle='--', alpha=0.7)\n    for bar in bars:\n        width = bar.get_width()\n        ax_d.text(width + 0.5, bar.get_y() + bar.get_height()/2, str(round(width, 1)) + '%', ha='left', va='center')\n    ax_d.set_xlim(0, max(class_counts.values) + 15)\n    plt.tight_layout()\n    plot_filename = 'data/results_summary_1_' + str(int(time.time())) + '.png'\n    plt.savefig(plot_filename, dpi=300, bbox_inches='tight')\n    plt.close()\n    print('Multi-panel figure saved to ' + plot_filename)\n    print('\\n--- Summary Statistics for Researcher ---')\n    print('Class Proportions:')\n    print(class_counts.to_string())\n    print('\\nMarginal Effects (Probability of Resiliently Optimistic):')\n    for qkb4_val, label in zip(qkb4_levels, qkb4_labels):\n        probs_print = []\n        for qkb11_val in [-2, 0, 2]:\n            x_vec = X_mean.copy()\n            x_vec[qkb_11_col] = qkb11_val\n            x_vec[qkb_4_col] = qkb4_val\n            x_vec['Interaction_QKB11_QKB4'] = qkb11_val * qkb4_val\n            etas = {}\n            for c in model_classes:\n                coefs = res_df[res_df['Class'] == c].set_index('Feature')['Coef']\n                coefs = coefs.reindex(x_vec.index).fillna(0)\n                eta = np.sum(x_vec * coefs)\n                etas[c] = eta\n            exp_etas = {c: np.exp(etas[c]) for c in model_classes}\n            sum_exp = 1.0 + sum(exp_etas.values())\n            prob = exp_etas[target_class] / sum_exp\n            probs_print.append(prob)\n        print(label + ': Inv=-2SD -> ' + str(round(probs_print[0], 4)) + ', Inv=0SD -> ' + str(round(probs_print[1], 4)) + ', Inv=+2SD -> ' + str(round(probs_print[2], 4)))\n    print('\\nOdds Ratios for Key Features:')\n    for c in plot_classes:\n        print('\\nClass: ' + c)\n        c_data = res_df[(res_df['Class'] == c) & (res_df['Feature'].isin(key_features))].copy()\n        c_data['Feature'] = pd.Categorical(c_data['Feature'], categories=key_features, ordered=True)\n        c_data = c_data.sort_values('Feature')\n        for _, row in c_data.iterrows():\n            print('  ' + str(row['Feature'])[:30] + '... : OR=' + str(round(row['OR'], 3)) + ' (95% CI: ' + str(round(row['CI_Lower'], 3)) + '-' + str(round(row['CI_Upper'], 3)) + '), p=' + str(round(row['FDR_P_value'], 4)))\n\nif __name__ == '__main__':\n    generate_plots()\n```",
+    "timestamp": "2026-04-13 17:26:41",
+    "cost": {
+      "Agent": [
+        "engineer_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.007393500000000001
+      ],
+      "Prompt Tokens": [
+        8082
+      ],
+      "Completion Tokens": [
+        3582
+      ],
+      "Total Tokens": [
+        11664
+      ]
+    }
+  },
+  {
+    "name": "executor",
+    "content": "Execution results:\n\nExecution output: \nLoading data...\nGenerating (a) Latent Class Profiles...\nGenerating (b) Marginal Effects Plot...\nGenerating (c) Coefficient Forest Plot...\nGenerating (d) Bar Chart of Class Proportions...\nMulti-panel figure saved to data/results_summary_1_1776101203.png\n\n--- Summary Statistics for Researcher ---\nClass Proportions:\nLCA_Class_Name\nAnxiously Declining       12.985017\nModerately Optimistic     26.507876\nStagnant Neutral          28.697657\nResiliently Optimistic    31.809451\n\nMarginal Effects (Probability of Resiliently Optimistic):\nLow Training (-1 SD): Inv=-2SD -> 0.2, Inv=0SD -> 0.2658, Inv=+2SD -> 0.3416\nMean Training (0 SD): Inv=-2SD -> 0.2343, Inv=0SD -> 0.3002, Inv=+2SD -> 0.3726\nHigh Training (+1 SD): Inv=-2SD -> 0.2724, Inv=0SD -> 0.3371, Inv=+2SD -> 0.4047\n\nOdds Ratios for Key Features:\n\nClass: Resiliently Optimistic\n  Affective_Disposition_Factor_2... : OR=0.554 (95% CI: 0.494-0.622), p=0.0\n  Affective_Disposition_Factor_1... : OR=1.487 (95% CI: 1.32-1.675), p=0.0\n  Company_Culture_Index... : OR=1.154 (95% CI: 1.012-1.316), p=0.0566\n  QKB_1_4: Regular training for ... : OR=1.192 (95% CI: 1.065-1.334), p=0.0059\n  QKB_1_11: Involve employees (e... : OR=1.256 (95% CI: 1.126-1.401), p=0.0002\n  Interaction_QKB11_QKB4... : OR=0.99 (95% CI: 0.9-1.09), p=0.9085\n\nClass: Anxiously Declining\n  Affective_Disposition_Factor_2... : OR=1.143 (95% CI: 1.015-1.287), p=0.0513\n  Affective_Disposition_Factor_1... : OR=0.673 (95% CI: 0.597-0.758), p=0.0\n  Company_Culture_Index... : OR=0.857 (95% CI: 0.78-0.942), p=0.0042\n  QKB_1_4: Regular training for ... : OR=1.035 (95% CI: 0.904-1.186), p=0.8116\n  QKB_1_11: Involve employees (e... : OR=1.076 (95% CI: 0.941-1.229), p=0.3972\n  Interaction_QKB11_QKB4... : OR=1.01 (95% CI: 0.91-1.121), p=0.9085\n",
+    "timestamp": "2026-04-13 17:26:43",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "execution_recorder",
+    "content": "Code execution recorded.\n\nExecution output:\nExecution results:\n\nExecution output: \nLoading data...\nGenerating (a) Latent Class Profiles...\nGenerating (b) Marginal Effects Plot...\nGenerating (c) Coefficient Forest Plot...\nGenerating (d) Bar Chart of Class Proportions...\nMulti-panel figure saved to data/results_summary_1_1776101203.png\n\n--- Summary Statistics for Researcher ---\nClass Proportions:\nLCA_Class_Name\nAnxiously Declining       12.985017\nModerately Optimistic     26.507876\nStagnant Neutral          28.697657\nResiliently Optimistic    31.809451\n\nMarginal Effects (Probability of Resiliently Optimistic):\nLow Training (-1 SD): Inv=-2SD -> 0.2, Inv=0SD -> 0.2658, Inv=+2SD -> 0.3416\nMean Training (0 SD): Inv=-2SD -> 0.2343, Inv=0SD -> 0.3002, Inv=+2SD -> 0.3726\nHigh Training (+1 SD): Inv=-2SD -> 0.2724, Inv=0SD -> 0.3371, Inv=+2SD -> 0.4047\n\nOdds Ratios for Key Features:\n\nClass: Resiliently Optimistic\n  Affective_Disposition_Factor_2... : OR=0.554 (95% CI: 0.494-0.622), p=0.0\n  Affective_Disposition_Factor_1... : OR=1.487 (95% CI: 1.32-1.675), p=0.0\n  Company_Culture_Index... : OR=1.154 (95% CI: 1.012-1.316), p=0.0566\n  QKB_1_4: Regular training for ... : OR=1.192 (95% CI: 1.065-1.334), p=0.0059\n  QKB_1_11: Involve employees (e... : OR=1.256 (95% CI: 1.126-1.401), p=0.0002\n  Interaction_QKB11_QKB4... : OR=0.99 (95% CI: 0.9-1.09), p=0.9085\n\nClass: Anxiously Declining\n  Affective_Disposition_Factor_2... : OR=1.143 (95% CI: 1.015-1.287), p=0.0513\n  Affective_Disposition_Factor_1... : OR=0.673 (95% CI: 0.597-0.758), p=0.0\n  Company_Culture_Index... : OR=0.857 (95% CI: 0.78-0.942), p=0.0042\n  QKB_1_4: Regular training for ... : OR=1.035 (95% CI: 0.904-1.186), p=0.8116\n  QKB_1_11: Involve employees (e... : OR=1.076 (95% CI: 0.941-1.229), p=0.3972\n  Interaction_QKB11_QKB4... : OR=1.01 (95% CI: 0.91-1.121), p=0.9085\n",
+    "timestamp": "2026-04-13 17:26:43",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "executor_response_evaluator",
+    "content": "",
+    "timestamp": "2026-04-13 17:26:45",
+    "cost": {
+      "Agent": [
+        "executor_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.000447
+      ],
+      "Prompt Tokens": [
+        1608
+      ],
+      "Completion Tokens": [
+        30
+      ],
+      "Total Tokens": [
+        1638
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "Code execution successful. 1 new image(s) generated.\n\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nWorkflow status:\n\nPlan step number: 5\n\nAgent for sub-task (might be different from the next agent suggestion for debugging): engineer\n\nStep status (before execution): in progress\n\nCode status: success\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n\nPlease review the generated images and provide feedback.",
+    "timestamp": "2026-04-13 17:26:45",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "image_reviewer",
+    "content": "[{'type': 'text', 'text': '**Needs Revision:** no\\n\\n**Issues:**\\nNone\\n\\n**Suggestions:**\\nNone\\n\\n**Summary:**\\nThe generated multi-panel figure is excellent. It successfully integrates four distinct types of analysis (latent class profiles, marginal effects of an interaction, a coefficient forest plot, and a bar chart of proportions) into a single, cohesive visualization. All labels are clear, legible, and correctly placed. The visual style is consistent across panels, and the data representation is accurate and informative. The figure perfectly fulfills the requirements of the task.', 'extras': {'signature': 'EjQKMgG+Pvb7Df0A3MFODBdfnG/cMDVG9JFlM/Z+Ajv9mjqdxJOnKm2ybnqbmz58rpc7W2We'}}]",
+    "timestamp": "2026-04-13 17:26:50",
+    "cost": {
+      "Agent": [
+        "image_reviewer"
+      ],
+      "Model": [
+        "gemini-3.1-flash-image-preview"
+      ],
+      "Cost": [
+        0.0002862
+      ],
+      "Prompt Tokens": [
+        3388
+      ],
+      "Completion Tokens": [
+        107
+      ],
+      "Total Tokens": [
+        3495
+      ]
+    }
+  },
+  {
+    "name": "image_review_recorder",
+    "content": "",
+    "timestamp": "2026-04-13 17:26:51",
+    "cost": {
+      "Agent": [
+        "image_review_recorder"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.0003035
+      ],
+      "Prompt Tokens": [
+        530
+      ],
+      "Completion Tokens": [
+        114
+      ],
+      "Total Tokens": [
+        644
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "Image review passed. Step marked as complete.\n\nSummary: The generated multi-panel figure is excellent. It successfully integrates four distinct types of analysis (latent class profiles, marginal effects of an interaction, a coefficient forest plot, and a bar chart of proportions) into a single, cohesive visualization. All labels are clear, legible, and correctly placed. The visual style is consistent across panels, and the data representation is accurate and informative. The figure perfectly fulfills the requirements of the task.",
+    "timestamp": "2026-04-13 17:26:51",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "controller",
+    "content": "",
+    "timestamp": "2026-04-13 17:26:52",
+    "cost": {
+      "Agent": [
+        "controller"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00499325
+      ],
+      "Prompt Tokens": [
+        19865
+      ],
+      "Completion Tokens": [
+        18
+      ],
+      "Total Tokens": [
+        19883
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "\n**Step number:** 5 out of 6.\n\n**Sub-task:** Visualization of Results\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Generate a multi-panel figure: (a) latent class profiles, (b) marginal effects plot for QKB_1_11 \u00d7 QKB_1_4 interaction, (c) coefficient forest plot of odds ratios, and (d) bar chart of class membership proportions.\n- Ensure all labels are visible and save as a high-resolution PNG.\n\n**Step status:** completed \u2705\n\n**Code status:** success\n\n**Step iteration:** 0/10\n        ",
+    "timestamp": "2026-04-13 17:26:52",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "terminator",
+    "content": "TERMINATE",
+    "timestamp": "2026-04-13 17:26:52",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  }
+]

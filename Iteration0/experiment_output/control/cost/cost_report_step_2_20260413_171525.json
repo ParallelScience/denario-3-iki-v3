@@ -1,0 +1,82 @@
+[
+  {
+    "Agent": "control starter",
+    "Cost ($)": 0.00098875,
+    "Prompt Tokens": 3697.0,
+    "Completion Tokens": 43.0,
+    "Total Tokens": 3740.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "controller",
+    "Cost ($)": 0.00235975,
+    "Prompt Tokens": 9331.0,
+    "Completion Tokens": 18.0,
+    "Total Tokens": 9349.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "installer",
+    "Cost ($)": 0.00185225,
+    "Prompt Tokens": 7235.0,
+    "Completion Tokens": 29.0,
+    "Total Tokens": 7264.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "engineer response evaluator",
+    "Cost ($)": 0.01575825,
+    "Prompt Tokens": 27897.0,
+    "Completion Tokens": 5856.0,
+    "Total Tokens": 33753.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "image reviewer",
+    "Cost ($)": 0.00029625,
+    "Prompt Tokens": 3650.0,
+    "Completion Tokens": 75.0,
+    "Total Tokens": 3725.0,
+    "Model": "gemini-3.1-flash-image-preview"
+  },
+  {
+    "Agent": "image review recorder",
+    "Cost ($)": 0.0002465,
+    "Prompt Tokens": 494.0,
+    "Completion Tokens": 82.0,
+    "Total Tokens": 576.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "engineer",
+    "Cost ($)": 0.163184,
+    "Prompt Tokens": 54388.0,
+    "Completion Tokens": 4534.0,
+    "Total Tokens": 58922.0,
+    "Model": "gemini-3.1-pro-preview"
+  },
+  {
+    "Agent": "executor response evaluator",
+    "Cost ($)": 0.0054865,
+    "Prompt Tokens": 15802.0,
+    "Completion Tokens": 1024.0,
+    "Total Tokens": 16826.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "bash",
+    "Cost ($)": 0.00340625,
+    "Prompt Tokens": 13247.0,
+    "Completion Tokens": 63.0,
+    "Total Tokens": 13310.0,
+    "Model": "gemini-3.1-flash-lite-preview"
+  },
+  {
+    "Agent": "Total",
+    "Cost ($)": 0.19357850000000001,
+    "Prompt Tokens": 135741.0,
+    "Completion Tokens": 11724.0,
+    "Total Tokens": 147465.0,
+    "Model": NaN
+  }
+]

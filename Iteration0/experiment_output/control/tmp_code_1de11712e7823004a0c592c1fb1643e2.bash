@@ -1,0 +1,1 @@
+/opt/denario-venv/bin/python -c 'import sklearn; import factor_analyzer; print(f"sklearn: {sklearn.__version__}"); print(f"factor_analyzer: {factor_analyzer.__version__}")'
