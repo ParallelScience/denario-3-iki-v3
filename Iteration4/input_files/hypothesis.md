@@ -1,0 +1,8 @@
+The "Awareness-Uncertainty Paradox" suggests that organizational enablers (training/involvement) act as catalysts for "informed ambiguity" rather than psychological security. I hypothesize that the perceived impact of AI on job security is not a direct function of organizational policy, but is instead mediated by the **"Task-Autonomy Mismatch"**: the gap between an employee's *actual* AI-driven task evolution (the shift in repetitive vs. complex work volume, `QGP` and `QGU`) and their *perceived* level of personal agency (`QEA_11`/`QEB_11`). 
+
+I propose a **Task-Agency Alignment Analysis**:
+1. **Construct a "Task Transformation Delta"**: Calculate the difference between current and expected AI impact on repetitive vs. complex work (`QGU_3 - QGP_3`).
+2. **Interaction Modeling**: Test whether the relationship between this "Task Transformation Delta" and job security is moderated by the employee's "Personal Agency" score. 
+3. **Hypothesis**: Employees who experience high task transformation (increased complex work) but report low personal agency will be significantly more likely to fall into the "Anxiously Declining" class, regardless of the level of organizational training or involvement. Conversely, high agency acts as a buffer that converts "Task Transformation" into "Professional Growth" rather than "Job Threat." 
+
+This shifts the focus from *organizational policy* (which has shown diminishing returns) to *individual task-design alignment*, testing whether the "Anxiously Declining" class is defined by a loss of control over the *nature* of their work rather than the *existence* of their role.
