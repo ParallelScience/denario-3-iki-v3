@@ -1,0 +1,8 @@
+{
+  "primary_category": "cs.CY",
+  "secondary_categories": [
+    "cs.HC",
+    "cs.LG"
+  ],
+  "justification": "The paper focuses on the societal and organizational impact of AI on employee job security, which fits best within cs.CY (Computers and Society). It also involves human-computer interaction aspects (cs.HC) and utilizes machine learning techniques like Elastic Net and Latent Class Analysis (cs.LG) for data modeling."
+}

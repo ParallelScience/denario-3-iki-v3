@@ -1,0 +1,113 @@
+
+###### PROMPT BEGINS ########
+Human: You are a scientific paper classifier. Your task is to determine the most appropriate top-level arXiv archive for the following paper.
+
+**Paper Title:** Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability
+
+**Abstract:** The integration of Artificial Intelligence (AI) into the workplace prompts complex and heterogeneous employee responses regarding job security, which are often obscured by traditional analytical methods. To address this complexity, we adopt a person-centered approach, using Latent Class Analysis (LCA) on survey data from 2,603 employees in large global enterprises to identify distinct psychological trajectories based on current and expected job security. Our analysis reveals three distinct groups: a majority "Resiliently Optimistic" cohort, a "Stagnant Neutral" group, and a significant "Anxiously Declining" minority, demonstrating that perceptions of AI's impact are highly stratified. We then employ a multinomial logistic regression, using Elastic Net for feature selection, to identify the specific organizational policies, cultural attributes, and affective dispositions that predict membership in these latent classes. Membership in the "Resiliently Optimistic" class is strongly associated with structural enablers that provide employees with agency and tangible value, such as direct involvement in AI development and non-monetary incentives like peer recognition and learning certifications. Conversely, membership in the "Anxiously Declining" class is driven by deterrents such as fear of job loss and privacy concerns, which overwhelm the potential benefits of organizational support. These findings indicate that fostering psychological stability amidst technological change hinges not on abstract commitments to training, but on implementing participatory, incentive-aligned frameworks that empower employees and decouple AI-driven task evolution from perceived job displacement.
+
+**Archives:**
+- astro-ph: Astrophysics — cosmology, galaxies, stellar physics, planetary science, high-energy astrophysics, instrumentation
+- cond-mat: Condensed Matter — materials science, superconductivity, quantum gases, soft matter, statistical mechanics
+- cs: Computer Science — AI, machine learning, NLP, computer vision, algorithms, networking, security, software
+- econ: Economics — econometrics, general economics, theoretical economics
+- eess: Electrical Engineering and Systems Science — signal processing, image/video processing, audio/speech, control
+- gr-qc: General Relativity and Quantum Cosmology — gravitational physics, gravitational waves, black holes
+- hep-ex: High Energy Physics - Experiment — particle physics experiments, collider results
+- hep-lat: High Energy Physics - Lattice — lattice field theory, lattice QCD
+- hep-ph: High Energy Physics - Phenomenology — theoretical particle physics connected to experiment
+- hep-th: High Energy Physics - Theory — string theory, quantum field theory, supersymmetry
+- math: Mathematics — algebra, geometry, topology, analysis, probability, number theory, optimization
+- math-ph: Mathematical Physics — mathematical methods for physics problems
+- nlin: Nonlinear Sciences — chaos, pattern formation, solitons, integrable systems, self-organization
+- nucl-ex: Nuclear Experiment — experimental nuclear physics
+- nucl-th: Nuclear Theory — nuclear structure theory, hadron models, neutron stars
+- physics: Physics (General) — classical, computational, fluid dynamics, optics, plasma, applied, biological, chemical physics
+- q-bio: Quantitative Biology — biomolecules, genomics, neuroscience, populations, quantitative methods
+- q-fin: Quantitative Finance — computational finance, portfolio management, risk, pricing, trading
+- quant-ph: Quantum Physics — quantum information, computation, entanglement, foundations, optics
+- stat: Statistics — methodology, applications, machine learning (with statistical grounding), computation
+
+Select the single most appropriate archive for this paper. If the paper spans multiple fields, choose the one where the paper makes its primary contribution.
+
+###### PROMPT ENDS ########
+
+archive='cs' justification='The paper focuses on the impact of Artificial Intelligence in the workplace and utilizes machine learning techniques like Elastic Net for feature selection, placing it firmly within the scope of Computer Science and its intersection with organizational behavior.'
+###### PROMPT BEGINS ########
+Human: You are a scientific paper classifier. You have already determined that this paper belongs to the **cs** archive on arXiv. Now select the specific subcategory.
+
+**Paper Title:** Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability
+
+**Abstract:** The integration of Artificial Intelligence (AI) into the workplace prompts complex and heterogeneous employee responses regarding job security, which are often obscured by traditional analytical methods. To address this complexity, we adopt a person-centered approach, using Latent Class Analysis (LCA) on survey data from 2,603 employees in large global enterprises to identify distinct psychological trajectories based on current and expected job security. Our analysis reveals three distinct groups: a majority "Resiliently Optimistic" cohort, a "Stagnant Neutral" group, and a significant "Anxiously Declining" minority, demonstrating that perceptions of AI's impact are highly stratified. We then employ a multinomial logistic regression, using Elastic Net for feature selection, to identify the specific organizational policies, cultural attributes, and affective dispositions that predict membership in these latent classes. Membership in the "Resiliently Optimistic" class is strongly associated with structural enablers that provide employees with agency and tangible value, such as direct involvement in AI development and non-monetary incentives like peer recognition and learning certifications. Conversely, membership in the "Anxiously Declining" class is driven by deterrents such as fear of job loss and privacy concerns, which overwhelm the potential benefits of organizational support. These findings indicate that fostering psychological stability amidst technological change hinges not on abstract commitments to training, but on implementing participatory, incentive-aligned frameworks that empower employees and decouple AI-driven task evolution from perceived job displacement.
+
+**Methods (if available):** \subsection{Sample and data}
+The analysis is based on survey data collected from a sample of 2,603 employees working in large global enterprises. The survey captured a wide range of variables, including demographic information, perceptions of AI's impact on job security, affective responses to AI, and detailed assessments of organizational policies and culture. Key variables included Likert-scale items measuring current and expected job security, binary items on emotional attitudes, and questions regarding specific organizational enablers and deterrents related to AI adoption.
+
+\subsection{Latent class analysis}
+To identify unobserved heterogeneity in employee responses to AI, we employed a person-centered approach using Latent Class Analysis (LCA). The LCA was performed on the joint distribution of two indicator variables: current perceived impact of AI on job security and the expected impact in three years. This method allows for the empirical identification of distinct subgroups, or latent classes, of employees who share similar response patterns, representing different psychological trajectories.
+
+The optimal number of classes was determined by fitting models with two to six classes and comparing their statistical fit indices. We primarily relied on the Bayesian Information Criterion (BIC), where a lower value indicates a better model fit, and the normalized entropy, which measures the certainty of classification. A three-class solution was selected as it provided the lowest BIC value and high class separation, indicating a robust and interpretable typology of employee trajectories.
+
+\subsection{Analytical strategy}
+Our analytical strategy proceeded in three main stages following the identification of the latent classes.
+
+\subsubsection{Dimensionality reduction of affective dispositions}
+To model employees' underlying emotional attitudes towards AI without introducing multicollinearity from the 16 binary survey items, we first conducted an Exploratory Factor Analysis (EFA). Given the binary nature of the items, the EFA was based on a tetrachoric correlation matrix. A Varimax rotation was applied to the extracted factors to improve interpretability. This process yielded two distinct and internally consistent latent factors, labeled "Positive Affect" and "Negative Affect". The internal consistency of these factors was assessed using McDonald's Omega ($\Omega$). The resulting factor scores were retained as continuous covariates for subsequent regression models.
+
+\subsubsection{Predictor selection and regression modeling}
+To identify the most salient organizational factors predicting class membership, we first used an Elastic Net logistic regression. This regularization method performs automated feature selection, making it well-suited for identifying a parsimonious set of predictors from a larger pool of correlated variables, such as the various organizational policies surveyed.
+
+The predictors identified by the Elastic Net, along with the affective disposition factor scores and key deterrents, were then included in a comprehensive Multinomial Logistic Regression (MNLogit) model. The dependent variable for this model was the three-level latent class membership. The "Anxiously Declining" class was set as the reference category to facilitate the interpretation of model coefficients. This allowed us to directly estimate how specific organizational enablers and deterrents affect the odds of an employee belonging to the "Resiliently Optimistic" or "Stagnant Neutral" class compared to the most vulnerable group. Results are reported as Odds Ratios (OR) with corresponding 95\% confidence intervals.
+
+\subsubsection{Policy simulation and robustness checks}
+To translate the regression results into practical insights, we conducted a Monte Carlo policy simulation based on the estimated coefficients from the multinomial model. This simulation calculated the predicted probability of an average employee belonging to the "Resiliently Optimistic" class under different combinations of key organizational policies, specifically contrasting the effects of providing training with direct employee involvement in AI development.
+
+Finally, to ensure the stability of our findings, we performed several robustness checks. We assessed multicollinearity among the predictors in our final model by calculating Variance Inflation Factors (VIF). Furthermore, we conducted a sensitivity analysis by re-estimating the multinomial logistic regression on modified versions of the sample: one excluding respondents who answered "Not sure" to the job security questions, and another where "Not sure" responses were imputed with the modal value. The stability of the key predictors' odds ratios across these model specifications was used to confirm the robustness of our conclusions.
+
+**Available subcategories in cs:**
+- cs.AI: Artificial Intelligence — Covers all areas of AI except Vision, Robotics, Machine Learning, Multiagent Systems, and Computation and Language, which have separate categories.
+- cs.AR: Hardware Architecture — Covers systems organization and hardware architecture, including digital logic, processor design, memory systems.
+- cs.CC: Computational Complexity — Covers models of computation, complexity classes, structural complexity, complexity tradeoffs, upper and lower bounds.
+- cs.CE: Computational Engineering, Finance, and Science — Covers applications of computer science to the mathematical modeling of complex systems in science, engineering, and finance.
+- cs.CG: Computational Geometry — Covers geometric algorithms, computational methods for spatial problems, mesh generation, shape analysis.
+- cs.CL: Computation and Language — Covers natural language processing, computational linguistics, speech recognition, text generation, machine translation.
+- cs.CR: Cryptography and Security — Covers all areas of cryptography and security including authentication, public key cryptosystems, proof-carrying code.
+- cs.CV: Computer Vision and Pattern Recognition — Covers image processing, computer vision, pattern recognition, and scene understanding.
+- cs.CY: Computers and Society — Covers impact of computers on society, computer ethics, information technology and public policy, legal issues.
+- cs.DB: Databases — Covers database management, datamining, and data processing, query languages, indexing.
+- cs.DC: Distributed, Parallel, and Cluster Computing — Covers fault-tolerance, distributed algorithms, stability, parallel computation, and cluster computing.
+- cs.DL: Digital Libraries — Covers all aspects of the digital library design and document and text creation.
+- cs.DM: Discrete Mathematics — Covers combinatorics, graph theory, applications of probability in discrete structures.
+- cs.DS: Data Structures and Algorithms — Covers data structures and analysis of algorithms, sorting, searching, graph algorithms.
+- cs.ET: Emerging Technologies — Covers approaches to information processing based on alternatives to silicon CMOS-based technologies, including quantum computing, DNA computing.
+- cs.FL: Formal Languages and Automata Theory — Covers automata theory, formal language theory, grammars, and combinatorics on words.
+- cs.GL: General Literature — Covers introductory material, survey material, predictions of future trends, biographies.
+- cs.GR: Graphics — Covers all aspects of computer graphics, rendering, modeling, animation.
+- cs.GT: Computer Science and Game Theory — Covers all theoretical and applied aspects at the intersection of computer science and game theory, mechanism design, auction theory.
+- cs.HC: Human-Computer Interaction — Covers human factors, user interfaces, and collaborative computing.
+- cs.IR: Information Retrieval — Covers indexing, dictionaries, retrieval, content and analysis, search engines, web search.
+- cs.IT: Information Theory — Covers theoretical and experimental aspects of information theory and coding, data compression, channel capacity.
+- cs.LG: Machine Learning — Papers on all aspects of machine learning research including supervised, unsupervised, reinforcement learning, deep learning, representation learning.
+- cs.LO: Logic in Computer Science — Covers all aspects of logic in computer science, including finite model theory, logics of programs, modal logic, model checking.
+- cs.MA: Multiagent Systems — Covers multiagent systems, distributed artificial intelligence, intelligent agents, coordinated interactions, multi-robot systems.
+- cs.MM: Multimedia — Covers multimedia computing applications and technologies, media processing.
+- cs.MS: Mathematical Software — Covers development and analysis of algorithms for mathematical software, numerical libraries.
+- cs.NA: Numerical Analysis — Covers numerical methods, scientific computing, computational mathematics.
+- cs.NE: Neural and Evolutionary Computing — Covers neural networks, connectionism, genetic algorithms, artificial life, adaptive behavior, evolutionary computation.
+- cs.NI: Networking and Internet Architecture — Covers all aspects of computer communication networks, including network architecture and design, protocols, routing.
+- cs.OH: Other Computer Science — Classification for documents that do not fit anywhere else in computer science.
+- cs.OS: Operating Systems — Covers system software for resource management, process control, scheduling.
+- cs.PF: Performance — Covers performance measurement and evaluation, queueing, and simulation.
+- cs.PL: Programming Languages — Covers programming language semantics, language features, programming approaches, type systems, compilers.
+- cs.RO: Robotics — Covers robot design, control, planning, perception, manipulation, locomotion.
+- cs.SC: Symbolic Computation — Covers mathematical symbolic manipulation, computer algebra systems.
+- cs.SD: Sound — Covers all aspects of computing with sound, and sound as an information channel, audio processing.
+- cs.SE: Software Engineering — Covers design tools, software metrics, testing and debugging, programming environments, software development methodologies.
+- cs.SI: Social and Information Networks — Covers the design, analysis, and modeling of social and information networks, including online social networks, viral propagation.
+- cs.SY: Systems and Control — Covers theoretical and experimental research on all facets of automatic control systems, including linear and nonlinear control.
+
+Select one primary subcategory and up to 3 secondary subcategories (from any archive) that also apply. The primary must be from the list above. Secondary categories may come from any arXiv category if the paper is interdisciplinary.
+
+###### PROMPT ENDS ########
+
+primary_category='cs.CY' secondary_categories=['cs.HC', 'cs.LG'] justification='The paper focuses on the societal and organizational impact of AI on employee job security, which fits best within cs.CY (Computers and Society). It also involves human-computer interaction aspects (cs.HC) and utilizes machine learning techniques like Elastic Net and Latent Class Analysis (cs.LG) for data modeling.'
