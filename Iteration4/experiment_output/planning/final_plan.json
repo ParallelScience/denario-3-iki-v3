@@ -1,0 +1,77 @@
+{
+    "sub_tasks": [
+        {
+            "bullet_points": [
+                "Load the raw dataset and handle missing values (replace '.' with NaN).",
+                "Map all binary, ordinal, and Likert-scale variables to numeric formats as specified in the encoding notes.",
+                "Retain raw string values of QEA_2 and QEB_2 as separate columns for LCA.",
+                "Print full frequency tables for QEA_2 and QEB_2 (including \"Not sure\") to verify encoding.",
+                "Construct composite indices for Nature of Work (current/future) and generate country-specific income ranks.",
+                "Standardize continuous predictors and save the processed dataset."
+            ],
+            "sub_task": "Data Preprocessing and Feature Engineering",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Compute the tetrachoric correlation matrix from the 16 binary QHD items.",
+                "Perform EFA with oblique rotation (oblimin) specifying exactly 2 factors.",
+                "Report factor loadings, communalities, and variance explained.",
+                "Save factor scores and the factor loading table as a CSV file."
+            ],
+            "sub_task": "Affective Disposition Modeling",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Fit LCA models for 2, 3, and 4 classes using QEA_2 and QEB_2 as nominal indicators.",
+                "Compare models using BIC, AIC, and Entropy to justify the 3-class solution.",
+                "Print conditional response probabilities for each class and indicator level.",
+                "Assign class membership to each respondent and save the results."
+            ],
+            "sub_task": "Latent Class Analysis (LCA) Estimation",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Encode HIDDG and QDB as dummy variables.",
+                "Perform multinomial logistic regression to predict class membership (reference: \"Stagnant Neutral\").",
+                "Include \"Positive Affect,\" \"Negative Affect,\" HIDDG, QDB, QKB_1_4, QKB_1_11, and the interaction QKB_1_4 * QKB_1_11.",
+                "Print the full coefficient table (standard errors, z-statistics, p-values, odds ratios).",
+                "Compute and print predicted class membership probabilities for the four policy-lift combinations.",
+                "Check VIF for multicollinearity and save diagnostics."
+            ],
+            "sub_task": "Multinomial Logistic Regression and Interaction Analysis",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Define \"High-Complexity\" (IT, Life Sciences, Finance) vs. \"Low-Complexity\" sectors.",
+                "Test the sector-complexity-by-organizational-enabler interaction using a likelihood ratio test.",
+                "Print the demographic composition (job level, department, generation) of the \"Not sure\" class.",
+                "Calculate Average Marginal Effects (AMEs) for the \"Dual-Pillar\" predictors.",
+                "Save all diagnostic statistics and marginal effect estimates."
+            ],
+            "sub_task": "Sectoral Complexity and Sensitivity Diagnostics",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Generate a single multi-panel figure combining: LCA class distribution, dual-pillar interaction heatmap/line plot, and AME forest plot.",
+                "Ensure all axis labels include measurement units/scale descriptions.",
+                "Save the figure as a high-resolution PNG file."
+            ],
+            "sub_task": "Visualization of Results",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Synthesize quantitative findings: BIC/AIC/Entropy values, conditional response probabilities, odds ratios (with 95% CIs), policy-lift probabilities, AME values, and mediation coefficients.",
+                "Interpret the \"Dual-Pillar\" effect and the role of affective disposition in AI-driven job security perceptions.",
+                "Write the full Results section, explicitly referencing each plot by filename and panel label."
+            ],
+            "sub_task": "Results Synthesis and Interpretation",
+            "sub_task_agent": "researcher"
+        }
+    ]
+}

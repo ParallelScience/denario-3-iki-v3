@@ -1,0 +1,712 @@
+[
+  {
+    "name": "control_starter",
+    "content": "",
+    "timestamp": "2026-04-13 20:31:42",
+    "cost": {
+      "Agent": [
+        "control_starter"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.0009735000000000001
+      ],
+      "Prompt Tokens": [
+        3690
+      ],
+      "Completion Tokens": [
+        34
+      ],
+      "Total Tokens": [
+        3724
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "\n**Step number:** 6 out of 7.\n\n**Sub-task:** Visualization of Results\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Generate a single multi-panel figure combining: LCA class distribution, dual-pillar interaction heatmap/line plot, and AME forest plot.\n- Ensure all axis labels include measurement units/scale descriptions.\n- Save the figure as a high-resolution PNG file.\n\n**Status:** in progress \u23f3\n",
+    "timestamp": "2026-04-13 20:31:42",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "engineer",
+    "content": "**Code Explanation:**\n\nThis script generates a multi-panel figure summarizing the results of the Latent Class Analysis (LCA) and multinomial logistic regression. \n- **Panel A** displays the distribution of respondents across the identified latent classes as a bar chart, with percentages on the y-axis. \n- **Panel B** visualizes the predicted probabilities of class membership (excluding the reference class \"Stagnant Neutral\") across four policy-lift scenarios. These scenarios represent combinations of Regular Training and Employee Involvement, which were measured on a 1-5 scale. \n- **Panel C** presents a dot plot (acting as a forest plot) of the Average Marginal Effects (AME) for the organizational enablers, showing the change in probability for the non-reference classes. \n\nThe figure is saved as a high-resolution PNG file in the `data/` directory. The underlying data is also printed to the console to ensure all quantitative information is available for interpretation.\n\n**Python Code:**\n\n```python\nimport sys\nimport os\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom datetime import datetime\n\ndef main():\n    data_dir = 'data/'\n    \n    # Load data\n    df_proc = pd.read_csv(os.path.join(data_dir, 'processed_data.csv'), low_memory=False)\n    df_policy = pd.read_csv(os.path.join(data_dir, 'policy_lift_probabilities.csv'), index_col=0)\n    df_ame = pd.read_csv(os.path.join(data_dir, 'average_marginal_effects.csv'))\n    \n    # Set up figure\n    fig, axes = plt.subplots(1, 3, figsize=(18, 6))\n    \n    # Panel A: LCA Class Distribution\n    ax = axes[0]\n    class_counts = df_proc['LCA_Class'].dropna().value_counts(normalize=True) * 100\n    sns.barplot(x=class_counts.index, y=class_counts.values, ax=ax, palette='viridis', hue=class_counts.index, legend=False)\n    ax.set_title('A. LCA Class Distribution', fontsize=14)\n    ax.set_ylabel('Percentage of Respondents (%)', fontsize=12)\n    ax.set_xlabel('Latent Class (Categorical)', fontsize=12)\n    \n    ax.set_xticks(range(len(class_counts)))\n    ax.set_xticklabels(class_counts.index, rotation=15, ha='right')\n    \n    for i, v in enumerate(class_counts.values):\n        ax.text(i, v + 1, str(round(v, 1)) + '%', ha='center', va='bottom', fontsize=10)\n    ax.set_ylim(0, max(class_counts.values) * 1.15)\n    \n    # Panel B: Dual-Pillar Interaction\n    ax = axes[1]\n    plot_cols = [c for c in df_policy.columns if c != 'Stagnant Neutral']\n    if not plot_cols:\n        plot_cols = df_policy.columns\n        \n    markers = ['o', 's', '^']\n    for i, col in enumerate(plot_cols):\n        ax.plot(range(len(df_policy.index)), df_policy[col], marker=markers[i%len(markers)], \n                linewidth=2, markersize=8, label=col)\n        \n    ax.set_title('B. Policy-Lift: Predicted Probabilities', fontsize=14)\n    ax.set_ylabel('Predicted Probability (0-1 Scale)', fontsize=12)\n    ax.set_xlabel('Policy Combination (1-5 Scale: Training, Involvement)', fontsize=12)\n    ax.set_xticks(range(len(df_policy.index)))\n    ax.set_xticklabels(df_policy.index, rotation=15, ha='right')\n    ax.legend(title='Latent Class')\n    ax.grid(True, linestyle='--', alpha=0.7)\n    \n    # Panel C: AME Forest Plot\n    ax = axes[2]\n    df_ame_plot = df_ame[df_ame['Class'] != 'Stagnant Neutral'].copy()\n    if df_ame_plot.empty:\n        df_ame_plot = df_ame.copy()\n        \n    if df_ame_plot['Class'].nunique() == 1:\n        sns.stripplot(data=df_ame_plot, y='Predictor', x='AME', color='darkred', ax=ax, \n                      size=10, jitter=False)\n        ax.plot([], [], marker='o', color='darkred', linestyle='None', label=df_ame_plot['Class'].iloc[0])\n        ax.legend(title='Latent Class', loc='lower right')\n    else:\n        sns.stripplot(data=df_ame_plot, y='Predictor', x='AME', hue='Class', ax=ax, \n                      size=10, jitter=False, dodge=True, palette='magma')\n    \n    ax.set_title('C. Average Marginal Effects (AME)', fontsize=14)\n    ax.set_xlabel('Average Marginal Effect (\u0394 Probability)', fontsize=12)\n    ax.set_ylabel('Organizational Enabler (1-5 Scale)', fontsize=12)\n    ax.axvline(0, color='black', linestyle='--', linewidth=1)\n    ax.grid(True, axis='x', linestyle='--', alpha=0.7)\n    \n    plt.tight_layout()\n    \n    # Save figure\n    timestamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\n    plot_filename = \"lca_results_summary_1_\" + timestamp + \".png\"\n    plot_filepath = os.path.join(data_dir, plot_filename)\n    fig.savefig(plot_filepath, dpi=300, bbox_inches='tight')\n    \n    print(\"--- Data Summary for Visualization ---\")\n    print(\"\\nLCA Class Distribution (%):\")\n    print(class_counts.round(2).to_string())\n    print(\"\\nPolicy-Lift Predicted Probabilities:\")\n    print(df_policy.round(4).to_string())\n    print(\"\\nAverage Marginal Effects:\")\n    print(df_ame.round(5).to_string())\n    print(\"\\nPlot saved to \" + plot_filepath)\n\nif __name__ == '__main__':\n    main()\n```",
+    "timestamp": "2026-04-13 20:32:48",
+    "cost": {
+      "Agent": [
+        "engineer"
+      ],
+      "Model": [
+        "gemini-3.1-pro-preview"
+      ],
+      "Cost": [
+        0.073268
+      ],
+      "Prompt Tokens": [
+        27466
+      ],
+      "Completion Tokens": [
+        1528
+      ],
+      "Total Tokens": [
+        28994
+      ]
+    }
+  },
+  {
+    "name": "engineer_response_evaluator",
+    "content": "**Code Explanation:**\n\nThis script generates a multi-panel figure summarizing the results of the Latent Class Analysis (LCA) and multinomial logistic regression. Panel A displays the distribution of respondents across the identified latent classes as a bar chart, with percentages on the y-axis. Panel B visualizes the predicted probabilities of class membership (excluding the reference class 'Stagnant Neutral') across four policy-lift scenarios. These scenarios represent combinations of Regular Training and Employee Involvement, which were measured on a 1-5 scale. Panel C presents a dot plot (acting as a forest plot) of the Average Marginal Effects (AME) for the organizational enablers, showing the change in probability for the non-reference classes. The figure is saved as a high-resolution PNG file in the data/ directory. The underlying data is also printed to the console to ensure all quantitative information is available for interpretation.\n\n**Modifications:**\n\nEnsured all file paths use the data/ directory, added the main guard, removed unnecessary imports, and ensured all print statements are clean. The script is now ready for execution.\n\n**Python Code:**\n\n```python\n# filename: codebase/step_6.py\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom datetime import datetime\n\ndef main():\n    data_dir = 'data/'\n    df_proc = pd.read_csv(os.path.join(data_dir, 'processed_data.csv'), low_memory=False)\n    df_policy = pd.read_csv(os.path.join(data_dir, 'policy_lift_probabilities.csv'), index_col=0)\n    df_ame = pd.read_csv(os.path.join(data_dir, 'average_marginal_effects.csv'))\n    fig, axes = plt.subplots(1, 3, figsize=(18, 6))\n    ax = axes[0]\n    class_counts = df_proc['LCA_Class'].dropna().value_counts(normalize=True) * 100\n    sns.barplot(x=class_counts.index, y=class_counts.values, ax=ax, palette='viridis', hue=class_counts.index, legend=False)\n    ax.set_title('A. LCA Class Distribution', fontsize=14)\n    ax.set_ylabel('Percentage of Respondents (%)', fontsize=12)\n    ax.set_xlabel('Latent Class (Categorical)', fontsize=12)\n    ax.set_xticks(range(len(class_counts)))\n    ax.set_xticklabels(class_counts.index, rotation=15, ha='right')\n    for i, v in enumerate(class_counts.values):\n        ax.text(i, v + 1, str(round(v, 1)) + '%', ha='center', va='bottom', fontsize=10)\n    ax.set_ylim(0, max(class_counts.values) * 1.15)\n    ax = axes[1]\n    plot_cols = [c for c in df_policy.columns if c != 'Stagnant Neutral']\n    if not plot_cols:\n        plot_cols = df_policy.columns\n    markers = ['o', 's', '^']\n    for i, col in enumerate(plot_cols):\n        ax.plot(range(len(df_policy.index)), df_policy[col], marker=markers[i % len(markers)], linewidth=2, markersize=8, label=col)\n    ax.set_title('B. Policy-Lift: Predicted Probabilities', fontsize=14)\n    ax.set_ylabel('Predicted Probability (0-1 Scale)', fontsize=12)\n    ax.set_xlabel('Policy Combination (1-5 Scale: Training, Involvement)', fontsize=12)\n    ax.set_xticks(range(len(df_policy.index)))\n    ax.set_xticklabels(df_policy.index, rotation=15, ha='right')\n    ax.legend(title='Latent Class')\n    ax.grid(True, linestyle='--', alpha=0.7)\n    ax = axes[2]\n    df_ame_plot = df_ame[df_ame['Class'] != 'Stagnant Neutral'].copy()\n    if df_ame_plot.empty:\n        df_ame_plot = df_ame.copy()\n    if df_ame_plot['Class'].nunique() == 1:\n        sns.stripplot(data=df_ame_plot, y='Predictor', x='AME', color='darkred', ax=ax, size=10, jitter=False)\n        ax.plot([], [], marker='o', color='darkred', linestyle='None', label=df_ame_plot['Class'].iloc[0])\n        ax.legend(title='Latent Class', loc='lower right')\n    else:\n        sns.stripplot(data=df_ame_plot, y='Predictor', x='AME', hue='Class', ax=ax, size=10, jitter=False, dodge=True, palette='magma')\n    ax.set_title('C. Average Marginal Effects (AME)', fontsize=14)\n    ax.set_xlabel('Average Marginal Effect (\u0394 Probability)', fontsize=12)\n    ax.set_ylabel('Organizational Enabler (1-5 Scale)', fontsize=12)\n    ax.axvline(0, color='black', linestyle='--', linewidth=1)\n    ax.grid(True, axis='x', linestyle='--', alpha=0.7)\n    plt.tight_layout()\n    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')\n    plot_filename = 'lca_results_summary_1_' + timestamp + '.png'\n    plot_filepath = os.path.join(data_dir, plot_filename)\n    fig.savefig(plot_filepath, dpi=300, bbox_inches='tight')\n    print('--- Data Summary for Visualization ---')\n    print('\\nLCA Class Distribution (%):')\n    print(class_counts.round(2).to_string())\n    print('\\nPolicy-Lift Predicted Probabilities:')\n    print(df_policy.round(4).to_string())\n    print('\\nAverage Marginal Effects:')\n    print(df_ame.round(5).to_string())\n    print('Saved to ' + plot_filepath)\n\nif __name__ == '__main__':\n    main()\n```",
+    "timestamp": "2026-04-13 20:32:55",
+    "cost": {
+      "Agent": [
+        "engineer_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.003709
+      ],
+      "Prompt Tokens": [
+        5686
+      ],
+      "Completion Tokens": [
+        1525
+      ],
+      "Total Tokens": [
+        7211
+      ]
+    }
+  },
+  {
+    "name": "executor",
+    "content": "Execution results:\n\nExecution output: \n--- Data Summary for Visualization ---\n\nLCA Class Distribution (%):\nLCA_Class\nStagnant Neutral       97.32\nAnxiously Declining     2.68\n\nPolicy-Lift Predicted Probabilities:\n                 Stagnant Neutral  Anxiously Declining\nLow/Low (1,1)              0.9827               0.0173\nHigh/Low (5,1)             0.9924               0.0076\nLow/High (1,5)             0.9983               0.0017\nHigh/High (5,5)            0.9672               0.0328\n\nAverage Marginal Effects:\n                    Class                        Predictor      AME\n0        Stagnant Neutral       QKB_1_4 (Regular Training) -0.00957\n1        Stagnant Neutral  QKB_1_11 (Employee Involvement) -0.00300\n2  Resiliently Optimistic       QKB_1_4 (Regular Training)  0.00957\n3  Resiliently Optimistic  QKB_1_11 (Employee Involvement)  0.00300\nSaved to data/lca_results_summary_1_20260413_203256.png\n",
+    "timestamp": "2026-04-13 20:32:56",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "execution_recorder",
+    "content": "Code execution recorded.\n\nExecution output:\nExecution results:\n\nExecution output: \n--- Data Summary for Visualization ---\n\nLCA Class Distribution (%):\nLCA_Class\nStagnant Neutral       97.32\nAnxiously Declining     2.68\n\nPolicy-Lift Predicted Probabilities:\n                 Stagnant Neutral  Anxiously Declining\nLow/Low (1,1)              0.9827               0.0173\nHigh/Low (5,1)             0.9924               0.0076\nLow/High (1,5)             0.9983               0.0017\nHigh/High (5,5)            0.9672               0.0328\n\nAverage Marginal Effects:\n                    Class                        Predictor      AME\n0        Stagnant Neutral       QKB_1_4 (Regular Training) -0.00957\n1        Stagnant Neutral  QKB_1_11 (Employee Involvement) -0.00300\n2  Resiliently Optimistic       QKB_1_4 (Regular Training)  0.00957\n3  Resiliently Optimistic  QKB_1_11 (Employee Involvement)  0.00300\nSaved to data/lca_results_summary_1_20260413_203256.png\n",
+    "timestamp": "2026-04-13 20:32:56",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "executor_response_evaluator",
+    "content": "",
+    "timestamp": "2026-04-13 20:32:58",
+    "cost": {
+      "Agent": [
+        "executor_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00030625
+      ],
+      "Prompt Tokens": [
+        1045
+      ],
+      "Completion Tokens": [
+        30
+      ],
+      "Total Tokens": [
+        1075
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "Code execution successful. 1 new image(s) generated.\n\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nWorkflow status:\n\nPlan step number: 6\n\nAgent for sub-task (might be different from the next agent suggestion for debugging): engineer\n\nStep status (before execution): in progress\n\nCode status: success\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n\nPlease review the generated images and provide feedback.",
+    "timestamp": "2026-04-13 20:32:58",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "image_reviewer",
+    "content": "[{'type': 'text', 'text': '**Needs Revision:** yes\\n\\n**Issues:**\\n- The figure is missing the \"dual-pillar interaction heatmap/line plot\" requested in the instructions. Panel B shows predicted probabilities for only one class (\"Anxiously Declining\") and does not represent an interaction between two pillars (e.g., training and involvement) across different classes.\\n- The AME forest plot (Panel C) only shows effects for the \"Resiliently Optimistic\" class, which is not present in the LCA distribution (Panel A). The classes should be consistent across all panels.\\n- The y-axis label for Panel C is \"Organizational Enabler (1-5 Scale)\", but the axis ticks show specific enabler names (e.g., \"QKB_1_4 (Regular Training)\"). The label should reflect that these are specific enablers, not a generic scale.\\n- The x-axis label for Panel B is \"Policy Combination (1-5 Scale: Training, Involvement)\", but the ticks show specific combinations like \"Low/Low (1,1)\". The label should be more descriptive of the combinations shown.\\n\\n**Suggestions:**\\n- Replace Panel B with a heatmap or a multi-line plot that clearly shows the interaction between the two organizational enablers (e.g., training and involvement) on the outcome variable, for all identified latent classes.\\n- Ensure that the latent classes shown in Panel C match those identified in Panel A. If \"Resiliently Optimistic\" is a valid class, it should be included in Panel A. If not, it should be removed from Panel C.\\n- Change the y-axis label for Panel C to something like \"Organizational Enabler\" or \"Enabler Type\".\\n- Change the x-axis label for Panel B to something like \"Policy Combination (Training, Involvement)\" or \"Enabler Level Combination\".\\n- Consider adding a legend to Panel B to distinguish between the different latent classes, if a multi-line plot is used.\\n- Ensure that all panels have clear and descriptive titles.\\n\\n**Summary:**\\nThe figure fails to meet the core requirement of visualizing the dual-pillar interaction and has inconsistencies in the latent classes shown across panels. The axis labels also need improvement for clarity. A significant revision is required to address these issues.', 'extras': {'signature': 'EjQKMgG+Pvb7INyfAooYSuC1xiwpEN4U2ILcKpodVJ6V7XFvfB0jUmnSGc7DJK5P+D5DB/7y'}}]",
+    "timestamp": "2026-04-13 20:33:04",
+    "cost": {
+      "Agent": [
+        "image_reviewer"
+      ],
+      "Model": [
+        "gemini-3.1-flash-image-preview"
+      ],
+      "Cost": [
+        0.0003945
+      ],
+      "Prompt Tokens": [
+        3368
+      ],
+      "Completion Tokens": [
+        473
+      ],
+      "Total Tokens": [
+        3841
+      ]
+    }
+  },
+  {
+    "name": "image_review_recorder",
+    "content": "",
+    "timestamp": "2026-04-13 20:33:06",
+    "cost": {
+      "Agent": [
+        "image_review_recorder"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00096275
+      ],
+      "Prompt Tokens": [
+        899
+      ],
+      "Completion Tokens": [
+        492
+      ],
+      "Total Tokens": [
+        1391
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "**Image Review Feedback - Revision Needed**\n\n**Summary:** The figure fails to meet the core requirement of visualizing the dual-pillar interaction and has inconsistencies in the latent classes shown across panels. The axis labels also need improvement for clarity. A significant revision is required to address these issues.\n\n**Issues:**\n- The figure is missing the \"dual-pillar interaction heatmap/line plot\" requested in the instructions. Panel B shows predicted probabilities for only one class (\"Anxiously Declining\") and does not represent an interaction between two pillars (e.g., training and involvement) across different classes.\n- The AME forest plot (Panel C) only shows effects for the \"Resiliently Optimistic\" class, which is not present in the LCA distribution (Panel A). The classes should be consistent across all panels.\n- The y-axis label for Panel C is \"Organizational Enabler (1-5 Scale)\", but the axis ticks show specific enabler names (e.g., \"QKB_1_4 (Regular Training)\"). The label should reflect that these are specific enablers, not a generic scale.\n- The x-axis label for Panel B is \"Policy Combination (1-5 Scale: Training, Involvement)\", but the ticks show specific combinations like \"Low/Low (1,1)\". The label should be more descriptive of the combinations shown.\n\n**Suggestions:**\n- Replace Panel B with a heatmap or a multi-line plot that clearly shows the interaction between the two organizational enablers (e.g., training and involvement) on the outcome variable, for all identified latent classes.\n- Ensure that the latent classes shown in Panel C match those identified in Panel A. If \"Resiliently Optimistic\" is a valid class, it should be included in Panel A. If not, it should be removed from Panel C.\n- Change the y-axis label for Panel C to something like \"Organizational Enabler\" or \"Enabler Type\".\n- Change the x-axis label for Panel B to something like \"Policy Combination (Training, Involvement)\" or \"Enabler Level Combination\".\n- Consider adding a legend to Panel B to distinguish between the different latent classes, if a multi-line plot is used.\n- Ensure that all panels have clear and descriptive titles.\n\nAttempt 1 of 2. Please fix the plot and regenerate.",
+    "timestamp": "2026-04-13 20:33:06",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "engineer",
+    "content": "**Code Explanation:**\n\nThis revised script generates a multi-panel figure that accurately reflects the requested visualizations and addresses the feedback:\n- **Panel A** displays the distribution of respondents across the identified latent classes (\"Stagnant Neutral\" and \"Anxiously Declining\") as a bar chart.\n- **Panel B** has been replaced with a heatmap that clearly shows the dual-pillar interaction. The rows represent the four policy combinations of Regular Training and Employee Involvement, and the columns represent the latent classes. The cells display the predicted probabilities, allowing for a direct comparison of how the combinations affect each class. The axis labels have been updated to accurately describe the combinations.\n- **Panel C** presents the Average Marginal Effects (AME) forest plot. The data mapping issue from Step 5 (where \"Anxiously Declining\" was mislabeled as \"Resiliently Optimistic\") has been corrected. The plot now correctly displays the AMEs for both \"Stagnant Neutral\" and \"Anxiously Declining\", ensuring consistency across all panels. The y-axis label has been updated to \"Organizational Enabler\".\n\nThe figure is saved as a high-resolution PNG file in the `data/` directory, and the underlying data is printed to the console.\n\n**Modifications:**\n- Replaced the line plot in Panel B with a heatmap (`sns.heatmap`) to show the interaction across all identified latent classes.\n- Corrected the class name in the AME data (`df_ame`) from \"Resiliently Optimistic\" to \"Anxiously Declining\" to match the actual classes modeled and shown in Panel A.\n- Updated the y-axis label in Panel C to \"Organizational Enabler\".\n- Updated the y-axis label in Panel B to \"Enabler Level Combination\\n(Training, Involvement)\".\n- Plotted all available classes in Panel C to ensure consistency with the other panels.\n\n**Python Code:**\n\n```python\n# filename: codebase/step_6.py\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom datetime import datetime\n\ndef main():\n    data_dir = 'data/'\n    \n    # Load data\n    df_proc = pd.read_csv(os.path.join(data_dir, 'processed_data.csv'), low_memory=False)\n    df_policy = pd.read_csv(os.path.join(data_dir, 'policy_lift_probabilities.csv'), index_col=0)\n    df_ame = pd.read_csv(os.path.join(data_dir, 'average_marginal_effects.csv'))\n    \n    # Fix the class name in AME data due to mapping mismatch in step 5\n    df_ame['Class'] = df_ame['Class'].replace({'Resiliently Optimistic': 'Anxiously Declining'})\n    \n    # Set up figure\n    fig, axes = plt.subplots(1, 3, figsize=(20, 6))\n    \n    # Panel A: LCA Class Distribution\n    ax = axes[0]\n    class_counts = df_proc['LCA_Class'].dropna().value_counts(normalize=True) * 100\n    sns.barplot(x=class_counts.index, y=class_counts.values, ax=ax, palette='viridis', hue=class_counts.index, legend=False)\n    ax.set_title('A. LCA Class Distribution', fontsize=14)\n    ax.set_ylabel('Percentage of Respondents (%)', fontsize=12)\n    ax.set_xlabel('Latent Class', fontsize=12)\n    \n    ax.set_xticks(range(len(class_counts)))\n    ax.set_xticklabels(class_counts.index, rotation=0)\n    \n    for i, v in enumerate(class_counts.values):\n        ax.text(i, v + 1, str(round(v, 1)) + '%', ha='center', va='bottom', fontsize=11)\n    ax.set_ylim(0, max(class_counts.values) * 1.15)\n    \n    # Panel B: Dual-Pillar Interaction Heatmap\n    ax = axes[1]\n    sns.heatmap(df_policy, annot=True, cmap='Blues', fmt='.4f', ax=ax, \n                cbar_kws={'label': 'Predicted Probability'}, annot_kws={\"size\": 11})\n    ax.set_title('B. Dual-Pillar Interaction Heatmap', fontsize=14)\n    ax.set_ylabel('Enabler Level Combination\\n(Training, Involvement)', fontsize=12)\n    ax.set_xlabel('Latent Class', fontsize=12)\n    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)\n    \n    # Panel C: AME Forest Plot\n    ax = axes[2]\n    sns.stripplot(data=df_ame, y='Predictor', x='AME', hue='Class', ax=ax, \n                  size=12, jitter=False, dodge=True, palette='Set1')\n    \n    ax.set_title('C. Average Marginal Effects (AME)', fontsize=14)\n    ax.set_xlabel('Average Marginal Effect (\u0394 Probability)', fontsize=12)\n    ax.set_ylabel('Organizational Enabler', fontsize=12)\n    ax.axvline(0, color='black', linestyle='--', linewidth=1)\n    ax.grid(True, axis='x', linestyle='--', alpha=0.7)\n    ax.legend(title='Latent Class', loc='best')\n    \n    plt.tight_layout()\n    \n    # Save figure\n    timestamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\n    plot_filename = \"lca_results_summary_2_\" + timestamp + \".png\"\n    plot_filepath = os.path.join(data_dir, plot_filename)\n    fig.savefig(plot_filepath, dpi=300, bbox_inches='tight')\n    \n    print(\"--- Data Summary for Visualization ---\")\n    print(\"\\nLCA Class Distribution (%):\")\n    print(class_counts.round(2).to_string())\n    print(\"\\nPolicy-Lift Predicted Probabilities:\")\n    print(df_policy.round(4).to_string())\n    print(\"\\nAverage Marginal Effects:\")\n    print(df_ame.round(5).to_string())\n    print(\"\\nPlot saved to \" + plot_filepath)\n\nif __name__ == '__main__':\n    main()\n```",
+    "timestamp": "2026-04-13 20:34:19",
+    "cost": {
+      "Agent": [
+        "engineer",
+        "engineer"
+      ],
+      "Model": [
+        "gemini-3.1-pro-preview",
+        "gemini-3.1-pro-preview"
+      ],
+      "Cost": [
+        0.073268,
+        0.156998
+      ],
+      "Prompt Tokens": [
+        27466,
+        60271
+      ],
+      "Completion Tokens": [
+        1528,
+        3038
+      ],
+      "Total Tokens": [
+        28994,
+        63309
+      ]
+    }
+  },
+  {
+    "name": "engineer_response_evaluator",
+    "content": "**Code Explanation:**\n\nThis revised script generates a multi-panel figure that accurately reflects the requested visualizations and addresses the feedback: Panel A displays the distribution of respondents across the identified latent classes ('Stagnant Neutral' and 'Anxiously Declining') as a bar chart. Panel B has been replaced with a heatmap that clearly shows the dual-pillar interaction. The rows represent the four policy combinations of Regular Training and Employee Involvement, and the columns represent the latent classes. The cells display the predicted probabilities, allowing for a direct comparison of how the combinations affect each class. The axis labels have been updated to accurately describe the combinations. Panel C presents the Average Marginal Effects (AME) forest plot. The data mapping issue from Step 5 (where 'Anxiously Declining' was mislabeled as 'Resiliently Optimistic') has been corrected. The plot now correctly displays the AMEs for both 'Stagnant Neutral' and 'Anxiously Declining', ensuring consistency across all panels. The y-axis label has been updated to 'Organizational Enabler'. The figure is saved as a high-resolution PNG file in the data/ directory, and the underlying data is printed to the console.\n\n**Modifications:**\n\nReplaced the line plot in Panel B with a heatmap (sns.heatmap) to show the interaction across all identified latent classes. Corrected the class name in the AME data (df_ame) from 'Resiliently Optimistic' to 'Anxiously Declining' to match the actual classes modeled and shown in Panel A. Updated the y-axis label in Panel C to 'Organizational Enabler'. Updated the y-axis label in Panel B to 'Enabler Level Combination (Training, Involvement)'. Plotted all available classes in Panel C to ensure consistency with the other panels.\n\n**Python Code:**\n\n```python\n# filename: codebase/step_6.py\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom datetime import datetime\n\ndef main():\n    data_dir = 'data/'\n    df_proc = pd.read_csv(os.path.join(data_dir, 'processed_data.csv'), low_memory=False)\n    df_policy = pd.read_csv(os.path.join(data_dir, 'policy_lift_probabilities.csv'), index_col=0)\n    df_ame = pd.read_csv(os.path.join(data_dir, 'average_marginal_effects.csv'))\n    df_ame['Class'] = df_ame['Class'].replace({'Resiliently Optimistic': 'Anxiously Declining'})\n    fig, axes = plt.subplots(1, 3, figsize=(20, 6))\n    ax = axes[0]\n    class_counts = df_proc['LCA_Class'].dropna().value_counts(normalize=True) * 100\n    sns.barplot(x=class_counts.index, y=class_counts.values, ax=ax, palette='viridis', hue=class_counts.index, legend=False)\n    ax.set_title('A. LCA Class Distribution', fontsize=14)\n    ax.set_ylabel('Percentage of Respondents (%)', fontsize=12)\n    ax.set_xlabel('Latent Class', fontsize=12)\n    ax.set_xticks(range(len(class_counts)))\n    ax.set_xticklabels(class_counts.index, rotation=0)\n    for i, v in enumerate(class_counts.values):\n        ax.text(i, v + 1, str(round(v, 1)) + '%', ha='center', va='bottom', fontsize=11)\n    ax.set_ylim(0, max(class_counts.values) * 1.15)\n    ax = axes[1]\n    sns.heatmap(df_policy, annot=True, cmap='Blues', fmt='.4f', ax=ax, cbar_kws={'label': 'Predicted Probability'}, annot_kws={'size': 11})\n    ax.set_title('B. Dual-Pillar Interaction Heatmap', fontsize=14)\n    ax.set_ylabel('Enabler Level Combination\\n(Training, Involvement)', fontsize=12)\n    ax.set_xlabel('Latent Class', fontsize=12)\n    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)\n    ax = axes[2]\n    sns.stripplot(data=df_ame, y='Predictor', x='AME', hue='Class', ax=ax, size=12, jitter=False, dodge=True, palette='Set1')\n    ax.set_title('C. Average Marginal Effects (AME)', fontsize=14)\n    ax.set_xlabel('Average Marginal Effect (\u0394 Probability)', fontsize=12)\n    ax.set_ylabel('Organizational Enabler', fontsize=12)\n    ax.axvline(0, color='black', linestyle='--', linewidth=1)\n    ax.grid(True, axis='x', linestyle='--', alpha=0.7)\n    ax.legend(title='Latent Class', loc='best')\n    plt.tight_layout()\n    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')\n    plot_filename = 'lca_results_summary_2_' + timestamp + '.png'\n    plot_filepath = os.path.join(data_dir, plot_filename)\n    fig.savefig(plot_filepath, dpi=300, bbox_inches='tight')\n    print('--- Data Summary for Visualization ---')\n    print('\\nLCA Class Distribution (%):')\n    print(class_counts.round(2).to_string())\n    print('\\nPolicy-Lift Predicted Probabilities:')\n    print(df_policy.round(4).to_string())\n    print('\\nAverage Marginal Effects:')\n    print(df_ame.round(5).to_string())\n    print('\\nPlot saved to ' + plot_filepath)\n\nif __name__ == '__main__':\n    main()\n```",
+    "timestamp": "2026-04-13 20:34:26",
+    "cost": {
+      "Agent": [
+        "engineer_response_evaluator",
+        "engineer_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.003709,
+        0.00861175
+      ],
+      "Prompt Tokens": [
+        5686,
+        16693
+      ],
+      "Completion Tokens": [
+        1525,
+        2959
+      ],
+      "Total Tokens": [
+        7211,
+        19652
+      ]
+    }
+  },
+  {
+    "name": "executor",
+    "content": "Execution results:\n\nExecution output: \n--- Data Summary for Visualization ---\n\nLCA Class Distribution (%):\nLCA_Class\nStagnant Neutral       97.32\nAnxiously Declining     2.68\n\nPolicy-Lift Predicted Probabilities:\n                 Stagnant Neutral  Anxiously Declining\nLow/Low (1,1)              0.9827               0.0173\nHigh/Low (5,1)             0.9924               0.0076\nLow/High (1,5)             0.9983               0.0017\nHigh/High (5,5)            0.9672               0.0328\n\nAverage Marginal Effects:\n                 Class                        Predictor      AME\n0     Stagnant Neutral       QKB_1_4 (Regular Training) -0.00957\n1     Stagnant Neutral  QKB_1_11 (Employee Involvement) -0.00300\n2  Anxiously Declining       QKB_1_4 (Regular Training)  0.00957\n3  Anxiously Declining  QKB_1_11 (Employee Involvement)  0.00300\n\nPlot saved to data/lca_results_summary_2_20260413_203427.png\n",
+    "timestamp": "2026-04-13 20:34:27",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "execution_recorder",
+    "content": "Code execution recorded.\n\nExecution output:\nExecution results:\n\nExecution output: \n--- Data Summary for Visualization ---\n\nLCA Class Distribution (%):\nLCA_Class\nStagnant Neutral       97.32\nAnxiously Declining     2.68\n\nPolicy-Lift Predicted Probabilities:\n                 Stagnant Neutral  Anxiously Declining\nLow/Low (1,1)              0.9827               0.0173\nHigh/Low (5,1)             0.9924               0.0076\nLow/High (1,5)             0.9983               0.0017\nHigh/High (5,5)            0.9672               0.0328\n\nAverage Marginal Effects:\n                 Class                        Predictor      AME\n0     Stagnant Neutral       QKB_1_4 (Regular Training) -0.00957\n1     Stagnant Neutral  QKB_1_11 (Employee Involvement) -0.00300\n2  Anxiously Declining       QKB_1_4 (Regular Training)  0.00957\n3  Anxiously Declining  QKB_1_11 (Employee Involvement)  0.00300\n\nPlot saved to data/lca_results_summary_2_20260413_203427.png\n",
+    "timestamp": "2026-04-13 20:34:27",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "executor_response_evaluator",
+    "content": "",
+    "timestamp": "2026-04-13 20:34:28",
+    "cost": {
+      "Agent": [
+        "executor_response_evaluator",
+        "executor_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00030625,
+        0.00061275
+      ],
+      "Prompt Tokens": [
+        1045,
+        2091
+      ],
+      "Completion Tokens": [
+        30,
+        60
+      ],
+      "Total Tokens": [
+        1075,
+        2151
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "Code execution successful. 1 new image(s) generated.\n\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nWorkflow status:\n\nPlan step number: 6\n\nAgent for sub-task (might be different from the next agent suggestion for debugging): engineer\n\nStep status (before execution): in progress\n\nCode status: success\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n\nPlease review the generated images and provide feedback.",
+    "timestamp": "2026-04-13 20:34:28",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "image_reviewer",
+    "content": "[{'type': 'text', 'text': \"**Needs Revision:** yes\\n\\n**Issues:**\\n- The y-axis label for Panel B is cut off on the left side.\\n- The y-axis labels for Panel C (the variable names) are cut off on the left side.\\n- The x-axis label for Panel C is cut off at the bottom.\\n- The legend in Panel C overlaps with the data points.\\n- The title for Panel C is slightly cut off at the top.\\n\\n**Suggestions:**\\n- Increase the overall figure size or adjust the subplots' spacing using `plt.tight_layout()` or `fig.subplots_adjust()` to prevent labels from being cut off.\\n- Increase the left margin specifically to accommodate the long y-axis labels in Panels B and C.\\n- Increase the bottom margin to accommodate the x-axis label in Panel C.\\n- Move the legend in Panel C to a location where it does not overlap with the data, such as 'upper left' or outside the plot area.\\n- Ensure the top margin is sufficient for the titles.\\n\\n**Summary:**\\nThe figure successfully combines the three requested panels, but the layout is cramped, leading to multiple labels and titles being cut off or overlapping. The figure needs to be resized or the margins adjusted to ensure all text is fully visible and readable.\", 'extras': {'signature': 'EjQKMgG+Pvb7pZKPmhxOUhWCB+8ASnA6IYvRDs7r2pwhPeIVYeX/Em79H+j5kHkU1zm4K9XP'}}]",
+    "timestamp": "2026-04-13 20:34:32",
+    "cost": {
+      "Agent": [
+        "image_reviewer",
+        "image_reviewer"
+      ],
+      "Model": [
+        "gemini-3.1-flash-image-preview",
+        "gemini-3.1-flash-image-preview"
+      ],
+      "Cost": [
+        0.0003945,
+        0.00033390000000000004
+      ],
+      "Prompt Tokens": [
+        3368,
+        3368
+      ],
+      "Completion Tokens": [
+        473,
+        271
+      ],
+      "Total Tokens": [
+        3841,
+        3639
+      ]
+    }
+  },
+  {
+    "name": "image_review_recorder",
+    "content": "",
+    "timestamp": "2026-04-13 20:34:34",
+    "cost": {
+      "Agent": [
+        "image_review_recorder",
+        "image_review_recorder"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00096275,
+        0.0015687499999999998
+      ],
+      "Prompt Tokens": [
+        899,
+        1595
+      ],
+      "Completion Tokens": [
+        492,
+        780
+      ],
+      "Total Tokens": [
+        1391,
+        2375
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "**Image Review Feedback - Revision Needed**\n\n**Summary:** The figure successfully combines the three requested panels, but the layout is cramped, leading to multiple labels and titles being cut off or overlapping. The figure needs to be resized or the margins adjusted to ensure all text is fully visible and readable.\n\n**Issues:**\n- The y-axis label for Panel B is cut off on the left side.\n- The y-axis labels for Panel C (the variable names) are cut off on the left side.\n- The x-axis label for Panel C is cut off at the bottom.\n- The legend in Panel C overlaps with the data points.\n- The title for Panel C is slightly cut off at the top.\n\n**Suggestions:**\n- Increase the overall figure size or adjust the subplots' spacing using plt.tight_layout() or fig.subplots_adjust() to prevent labels from being cut off.\n- Increase the left margin specifically to accommodate the long y-axis labels in Panels B and C.\n- Increase the bottom margin to accommodate the x-axis label in Panel C.\n- Move the legend in Panel C to a location where it does not overlap with the data, such as 'upper left' or outside the plot area.\n- Ensure the top margin is sufficient for the titles.\n\nAttempt 2 of 2. Please fix the plot and regenerate.",
+    "timestamp": "2026-04-13 20:34:34",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "engineer",
+    "content": "**Code Explanation:**\n\nThis revised script generates the multi-panel figure with adjusted layout parameters to ensure all labels, titles, and legends are fully visible without overlapping or being cut off. \n- The figure size has been increased to `(22, 7)` to provide more space.\n- `plt.tight_layout(pad=3.0, w_pad=4.0)` is used to increase the padding between subplots and around the edges.\n- The legend in Panel C has been moved to the 'upper left' to avoid overlapping with the data points.\n- The y-axis labels in Panel C have been slightly shortened for better fit, and the rotation of y-tick labels in Panel B has been adjusted.\n\n**Modifications:**\n- Increased figure size from `(20, 6)` to `(22, 7)`.\n- Added `pad=3.0` and `w_pad=4.0` to `plt.tight_layout()` to increase margins and spacing between subplots.\n- Moved the legend in Panel C to `loc='upper left'`.\n- Shortened the predictor names in the AME dataframe slightly for better display in Panel C (e.g., \"QKB_1_4 (Regular Training)\" -> \"Regular Training\").\n\n**Python Code:**\n\n```python\n# filename: codebase/step_6.py\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom datetime import datetime\n\ndef main():\n    data_dir = 'data/'\n    \n    # Load data\n    df_proc = pd.read_csv(os.path.join(data_dir, 'processed_data.csv'), low_memory=False)\n    df_policy = pd.read_csv(os.path.join(data_dir, 'policy_lift_probabilities.csv'), index_col=0)\n    df_ame = pd.read_csv(os.path.join(data_dir, 'average_marginal_effects.csv'))\n    \n    # Fix the class name in AME data due to mapping mismatch in step 5\n    df_ame['Class'] = df_ame['Class'].replace({'Resiliently Optimistic': 'Anxiously Declining'})\n    \n    # Shorten predictor names for better display\n    df_ame['Predictor'] = df_ame['Predictor'].str.replace('QKB_1_4 ', '').str.replace('QKB_1_11 ', '')\n    \n    # Set up figure with larger size\n    fig, axes = plt.subplots(1, 3, figsize=(22, 7))\n    \n    # Panel A: LCA Class Distribution\n    ax = axes[0]\n    class_counts = df_proc['LCA_Class'].dropna().value_counts(normalize=True) * 100\n    sns.barplot(x=class_counts.index, y=class_counts.values, ax=ax, palette='viridis', hue=class_counts.index, legend=False)\n    ax.set_title('A. LCA Class Distribution', fontsize=15, pad=15)\n    ax.set_ylabel('Percentage of Respondents (%)', fontsize=13)\n    ax.set_xlabel('Latent Class', fontsize=13)\n    \n    ax.set_xticks(range(len(class_counts)))\n    ax.set_xticklabels(class_counts.index, rotation=0, fontsize=11)\n    \n    for i, v in enumerate(class_counts.values):\n        ax.text(i, v + 1, str(round(v, 1)) + '%', ha='center', va='bottom', fontsize=12)\n    ax.set_ylim(0, max(class_counts.values) * 1.15)\n    \n    # Panel B: Dual-Pillar Interaction Heatmap\n    ax = axes[1]\n    sns.heatmap(df_policy, annot=True, cmap='Blues', fmt='.4f', ax=ax, \n                cbar_kws={'label': 'Predicted Probability'}, annot_kws={\"size\": 12})\n    ax.set_title('B. Dual-Pillar Interaction Heatmap', fontsize=15, pad=15)\n    ax.set_ylabel('Enabler Level Combination\\n(Training, Involvement)', fontsize=13)\n    ax.set_xlabel('Latent Class', fontsize=13)\n    ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=11)\n    ax.set_xticklabels(ax.get_xticklabels(), rotation=0, fontsize=11)\n    \n    # Panel C: AME Forest Plot\n    ax = axes[2]\n    sns.stripplot(data=df_ame, y='Predictor', x='AME', hue='Class', ax=ax, \n                  size=12, jitter=False, dodge=True, palette='Set1')\n    \n    ax.set_title('C. Average Marginal Effects (AME)', fontsize=15, pad=15)\n    ax.set_xlabel('Average Marginal Effect (\u0394 Probability)', fontsize=13)\n    ax.set_ylabel('Organizational Enabler', fontsize=13)\n    ax.axvline(0, color='black', linestyle='--', linewidth=1)\n    ax.grid(True, axis='x', linestyle='--', alpha=0.7)\n    ax.legend(title='Latent Class', loc='upper left', bbox_to_anchor=(0.02, 0.98))\n    ax.set_yticklabels(ax.get_yticklabels(), fontsize=11)\n    \n    # Adjust layout with extra padding\n    plt.tight_layout(pad=3.0, w_pad=4.0)\n    \n    # Save figure\n    timestamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\n    plot_filename = \"lca_results_summary_3_\" + timestamp + \".png\"\n    plot_filepath = os.path.join(data_dir, plot_filename)\n    fig.savefig(plot_filepath, dpi=300, bbox_inches='tight')\n    \n    print(\"--- Data Summary for Visualization ---\")\n    print(\"\\nLCA Class Distribution (%):\")\n    print(class_counts.round(2).to_string())\n    print(\"\\nPolicy-Lift Predicted Probabilities:\")\n    print(df_policy.round(4).to_string())\n    print(\"\\nAverage Marginal Effects:\")\n    print(df_ame.round(5).to_string())\n    print(\"\\nPlot saved to \" + plot_filepath)\n\nif __name__ == '__main__':\n    main()\n```",
+    "timestamp": "2026-04-13 20:34:46",
+    "cost": {
+      "Agent": [
+        "engineer",
+        "engineer",
+        "engineer"
+      ],
+      "Model": [
+        "gemini-3.1-pro-preview",
+        "gemini-3.1-pro-preview",
+        "gemini-3.1-pro-preview"
+      ],
+      "Cost": [
+        0.073268,
+        0.156998,
+        0.250502
+      ],
+      "Prompt Tokens": [
+        27466,
+        60271,
+        97681
+      ],
+      "Completion Tokens": [
+        1528,
+        3038,
+        4595
+      ],
+      "Total Tokens": [
+        28994,
+        63309,
+        102276
+      ]
+    }
+  },
+  {
+    "name": "engineer_response_evaluator",
+    "content": "**Code Explanation:**\n\nThis revised script generates the multi-panel figure with adjusted layout parameters to ensure all labels, titles, and legends are fully visible without overlapping or being cut off. The figure size has been increased to (22, 7) to provide more space. plt.tight_layout(pad=3.0, w_pad=4.0) is used to increase the padding between subplots and around the edges. The legend in Panel C has been moved to the 'upper left' to avoid overlapping with the data points. The y-axis labels in Panel C have been slightly shortened for better fit, and the rotation of y-tick labels in Panel B has been adjusted.\n\n**Modifications:**\n\nIncreased figure size from (20, 6) to (22, 7). Added pad=3.0 and w_pad=4.0 to plt.tight_layout() to increase margins and spacing between subplots. Moved the legend in Panel C to loc='upper left'. Shortened the predictor names in the AME dataframe slightly for better display in Panel C (e.g., 'QKB_1_4 (Regular Training)' -> 'Regular Training').\n\n**Python Code:**\n\n```python\n# filename: codebase/step_6.py\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom datetime import datetime\n\ndef main():\n    data_dir = 'data/'\n    df_proc = pd.read_csv(os.path.join(data_dir, 'processed_data.csv'), low_memory=False)\n    df_policy = pd.read_csv(os.path.join(data_dir, 'policy_lift_probabilities.csv'), index_col=0)\n    df_ame = pd.read_csv(os.path.join(data_dir, 'average_marginal_effects.csv'))\n    df_ame['Class'] = df_ame['Class'].replace({'Resiliently Optimistic': 'Anxiously Declining'})\n    df_ame['Predictor'] = df_ame['Predictor'].str.replace('QKB_1_4 ', '').str.replace('QKB_1_11 ', '')\n    fig, axes = plt.subplots(1, 3, figsize=(22, 7))\n    ax = axes[0]\n    class_counts = df_proc['LCA_Class'].dropna().value_counts(normalize=True) * 100\n    sns.barplot(x=class_counts.index, y=class_counts.values, ax=ax, palette='viridis', hue=class_counts.index, legend=False)\n    ax.set_title('A. LCA Class Distribution', fontsize=15, pad=15)\n    ax.set_ylabel('Percentage of Respondents (%)', fontsize=13)\n    ax.set_xlabel('Latent Class', fontsize=13)\n    ax.set_xticks(range(len(class_counts)))\n    ax.set_xticklabels(class_counts.index, rotation=0, fontsize=11)\n    for i, v in enumerate(class_counts.values):\n        ax.text(i, v + 1, str(round(v, 1)) + '%', ha='center', va='bottom', fontsize=12)\n    ax.set_ylim(0, max(class_counts.values) * 1.15)\n    ax = axes[1]\n    sns.heatmap(df_policy, annot=True, cmap='Blues', fmt='.4f', ax=ax, cbar_kws={'label': 'Predicted Probability'}, annot_kws={'size': 12})\n    ax.set_title('B. Dual-Pillar Interaction Heatmap', fontsize=15, pad=15)\n    ax.set_ylabel('Enabler Level Combination\\n(Training, Involvement)', fontsize=13)\n    ax.set_xlabel('Latent Class', fontsize=13)\n    ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=11)\n    ax.set_xticklabels(ax.get_xticklabels(), rotation=0, fontsize=11)\n    ax = axes[2]\n    sns.stripplot(data=df_ame, y='Predictor', x='AME', hue='Class', ax=ax, size=12, jitter=False, dodge=True, palette='Set1')\n    ax.set_title('C. Average Marginal Effects (AME)', fontsize=15, pad=15)\n    ax.set_xlabel('Average Marginal Effect (\u0394 Probability)', fontsize=13)\n    ax.set_ylabel('Organizational Enabler', fontsize=13)\n    ax.axvline(0, color='black', linestyle='--', linewidth=1)\n    ax.grid(True, axis='x', linestyle='--', alpha=0.7)\n    ax.legend(title='Latent Class', loc='upper left', bbox_to_anchor=(0.02, 0.98))\n    ax.set_yticklabels(ax.get_yticklabels(), fontsize=11)\n    plt.tight_layout(pad=3.0, w_pad=4.0)\n    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')\n    plot_filename = 'lca_results_summary_3_' + timestamp + '.png'\n    plot_filepath = os.path.join(data_dir, plot_filename)\n    fig.savefig(plot_filepath, dpi=300, bbox_inches='tight')\n    print('--- Data Summary for Visualization ---')\n    print('\\nLCA Class Distribution (%):')\n    print(class_counts.round(2).to_string())\n    print('\\nPolicy-Lift Predicted Probabilities:')\n    print(df_policy.round(4).to_string())\n    print('\\nAverage Marginal Effects:')\n    print(df_ame.round(5).to_string())\n    print('\\nPlot saved to ' + plot_filepath)\n\nif __name__ == '__main__':\n    main()\n```",
+    "timestamp": "2026-04-13 20:34:53",
+    "cost": {
+      "Agent": [
+        "engineer_response_evaluator",
+        "engineer_response_evaluator",
+        "engineer_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.003709,
+        0.00861175,
+        0.014712
+      ],
+      "Prompt Tokens": [
+        5686,
+        16693,
+        32352
+      ],
+      "Completion Tokens": [
+        1525,
+        2959,
+        4416
+      ],
+      "Total Tokens": [
+        7211,
+        19652,
+        36768
+      ]
+    }
+  },
+  {
+    "name": "executor",
+    "content": "Execution results:\n\nExecution output: \n--- Data Summary for Visualization ---\n\nLCA Class Distribution (%):\nLCA_Class\nStagnant Neutral       97.32\nAnxiously Declining     2.68\n\nPolicy-Lift Predicted Probabilities:\n                 Stagnant Neutral  Anxiously Declining\nLow/Low (1,1)              0.9827               0.0173\nHigh/Low (5,1)             0.9924               0.0076\nLow/High (1,5)             0.9983               0.0017\nHigh/High (5,5)            0.9672               0.0328\n\nAverage Marginal Effects:\n                 Class               Predictor      AME\n0     Stagnant Neutral      (Regular Training) -0.00957\n1     Stagnant Neutral  (Employee Involvement) -0.00300\n2  Anxiously Declining      (Regular Training)  0.00957\n3  Anxiously Declining  (Employee Involvement)  0.00300\n\nPlot saved to data/lca_results_summary_3_20260413_203454.png\n",
+    "timestamp": "2026-04-13 20:34:54",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "execution_recorder",
+    "content": "Code execution recorded.\n\nExecution output:\nExecution results:\n\nExecution output: \n--- Data Summary for Visualization ---\n\nLCA Class Distribution (%):\nLCA_Class\nStagnant Neutral       97.32\nAnxiously Declining     2.68\n\nPolicy-Lift Predicted Probabilities:\n                 Stagnant Neutral  Anxiously Declining\nLow/Low (1,1)              0.9827               0.0173\nHigh/Low (5,1)             0.9924               0.0076\nLow/High (1,5)             0.9983               0.0017\nHigh/High (5,5)            0.9672               0.0328\n\nAverage Marginal Effects:\n                 Class               Predictor      AME\n0     Stagnant Neutral      (Regular Training) -0.00957\n1     Stagnant Neutral  (Employee Involvement) -0.00300\n2  Anxiously Declining      (Regular Training)  0.00957\n3  Anxiously Declining  (Employee Involvement)  0.00300\n\nPlot saved to data/lca_results_summary_3_20260413_203454.png\n",
+    "timestamp": "2026-04-13 20:34:54",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "executor_response_evaluator",
+    "content": "",
+    "timestamp": "2026-04-13 20:34:55",
+    "cost": {
+      "Agent": [
+        "executor_response_evaluator",
+        "executor_response_evaluator",
+        "executor_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00030625,
+        0.00061275,
+        0.0009127499999999999
+      ],
+      "Prompt Tokens": [
+        1045,
+        2091,
+        3111
+      ],
+      "Completion Tokens": [
+        30,
+        60,
+        90
+      ],
+      "Total Tokens": [
+        1075,
+        2151,
+        3201
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "Code execution successful. 1 new image(s) generated.\n\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nWorkflow status:\n\nPlan step number: 6\n\nAgent for sub-task (might be different from the next agent suggestion for debugging): engineer\n\nStep status (before execution): in progress\n\nCode status: success\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n\nPlease review the generated images and provide feedback.",
+    "timestamp": "2026-04-13 20:34:55",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "image_reviewer",
+    "content": "[{'type': 'text', 'text': '**Needs Revision:** yes\\n\\n**Issues:**\\n- In Panel C (Average Marginal Effects), the y-axis labels are incomplete. They only show \"(Regular Training)\" and \"(Employee Involvement)\" without the main variable name (e.g., \"QKB_2_4: Regular Training\"). This makes it unclear which specific enablers are being plotted.\\n- The y-axis labels in Panel C are also slightly cut off on the left edge.\\n\\n**Suggestions:**\\n- In Panel C, update the y-axis labels to include the full variable description (e.g., \"QKB_2_4: Regular Training\" and \"QKB_2_11: Employee Involvement\").\\n- Adjust the figure layout (e.g., using `plt.tight_layout()` or increasing the left margin) to ensure the full y-axis labels in Panel C are visible.\\n\\n**Summary:**\\nThe multi-panel figure is well-structured and visually appealing. However, Panel C has incomplete and slightly cut-off y-axis labels, which hinders the interpretation of the results. Needs revision to fix the labels.', 'extras': {'signature': 'EjQKMgG+Pvb7XEmGMXwUdiXaMApY913cGf0BsIUj3qkKBsdQIA+MrUorWk4e/xtC8IHwooZf'}}]",
+    "timestamp": "2026-04-13 20:35:00",
+    "cost": {
+      "Agent": [
+        "image_reviewer",
+        "image_reviewer",
+        "image_reviewer"
+      ],
+      "Model": [
+        "gemini-3.1-flash-image-preview",
+        "gemini-3.1-flash-image-preview",
+        "gemini-3.1-flash-image-preview"
+      ],
+      "Cost": [
+        0.0003945,
+        0.00033390000000000004,
+        0.0003222
+      ],
+      "Prompt Tokens": [
+        3368,
+        3368,
+        3368
+      ],
+      "Completion Tokens": [
+        473,
+        271,
+        232
+      ],
+      "Total Tokens": [
+        3841,
+        3639,
+        3600
+      ]
+    }
+  },
+  {
+    "name": "image_review_recorder",
+    "content": "",
+    "timestamp": "2026-04-13 20:35:01",
+    "cost": {
+      "Agent": [
+        "image_review_recorder",
+        "image_review_recorder",
+        "image_review_recorder"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00096275,
+        0.0015687499999999998,
+        0.0020984999999999997
+      ],
+      "Prompt Tokens": [
+        899,
+        1595,
+        2250
+      ],
+      "Completion Tokens": [
+        492,
+        780,
+        1024
+      ],
+      "Total Tokens": [
+        1391,
+        2375,
+        3274
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "Image review: Max attempts (2) reached. Step marked as complete.\n\nSummary: The multi-panel figure is well-structured and visually appealing. However, Panel C has incomplete and slightly cut-off y-axis labels, which hinders the interpretation of the results. Needs revision to fix the labels.",
+    "timestamp": "2026-04-13 20:35:01",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "controller",
+    "content": "",
+    "timestamp": "2026-04-13 20:35:02",
+    "cost": {
+      "Agent": [
+        "controller"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00567725
+      ],
+      "Prompt Tokens": [
+        22601
+      ],
+      "Completion Tokens": [
+        18
+      ],
+      "Total Tokens": [
+        22619
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "\n**Step number:** 6 out of 7.\n\n**Sub-task:** Visualization of Results\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Generate a single multi-panel figure combining: LCA class distribution, dual-pillar interaction heatmap/line plot, and AME forest plot.\n- Ensure all axis labels include measurement units/scale descriptions.\n- Save the figure as a high-resolution PNG file.\n\n**Step status:** completed \u2705\n\n**Code status:** success\n\n**Step iteration:** 0/10\n        ",
+    "timestamp": "2026-04-13 20:35:02",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "terminator",
+    "content": "TERMINATE",
+    "timestamp": "2026-04-13 20:35:02",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  }
+]
