@@ -1,0 +1,71 @@
+{
+    "sub_tasks": [
+        {
+            "bullet_points": [
+                "Load the raw dataset and handle missing values (coded as '.').",
+                "Encode all binary columns (QHD, QGM, QA_1, QF, QED_1, QKC, QGH) mapping 'Yes' to 1 and all other values to 0.",
+                "Encode ordinal Likert scales (QEA, QEB, QGP, QGU, QKB_1, QGO) to integer ranges (-2 to +2), treating \"Not sure\" as 99.",
+                "Encode remaining ordinal predictors (QC, QGI, QGS, QGR, QDG, QGN) per encoding notes.",
+                "Construct composite indices: Job Security (current/future), Nature of Work Change (current/future), QKB organizational enablers index, and QGO culture index.",
+                "Construct 'Baseline_Uncertainty' dummy variable (1 if 'Not sure' in QEA_2 or QEB_2, else 0).",
+                "Normalize income bands (QDF) within each country to create a relative ordinal rank.",
+                "Print summary of dataset shape, column types, and missing value counts per key variable.",
+                "Save the cleaned and feature-engineered dataset."
+            ],
+            "sub_task": "Data Preprocessing and Feature Engineering",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Compute the tetrachoric correlation matrix from the binary QHD items.",
+                "Perform EFA targeting a two-factor solution (\"Positive Affect\" and \"Negative Affect\") using WLSMV estimation and oblique rotation.",
+                "Print factor loadings table and McDonald’s omega values for each factor.",
+                "Calculate factor scores for each respondent and save the augmented dataset."
+            ],
+            "sub_task": "Affective Disposition Modeling",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Perform LCA using QEA_2 and QEB_2 as ordinal categorical indicators (including 'Not sure' as a level).",
+                "Test models with 2–5 classes; print and save a model comparison table (BIC, AIC, Entropy, log-likelihood).",
+                "Print conditional response probabilities for each latent class.",
+                "Assign respondents to their most likely latent class and save class labels.",
+                "Print summary table of class sizes and cross-tabulation of class membership against QEA_2/QEB_2 raw responses."
+            ],
+            "sub_task": "Latent Class Analysis (LCA)",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Conduct placebo test: regress class membership on organizational scale variables (Global Employee Size, Market Capitalization); print results.",
+                "Regress class membership on QKB index, QGO index, factor scores, job profile, sector, and country fixed effects (including scale variables if placebo test is significant).",
+                "Set 'Stagnant Neutral' as the reference category.",
+                "Include interaction terms between \"Company Culture\" and \"Job Level,\" and perform moderation analysis: Class ~ Training * (Baseline_Uncertainty).",
+                "Print full coefficient table (odds ratios, 95% CI, FDR-corrected p-values), McFadden's Pseudo-R-squared, and 5-fold CV accuracy.",
+                "Save all model outputs as a CSV file."
+            ],
+            "sub_task": "Multinomial Logistic Regression and Robustness Testing",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Generate multi-panel figures: heatmap/bar chart of LCA model comparison statistics, stacked bar chart of conditional response probabilities per class, forest plot of regression odds ratios, and marginal effects plots for key predictors.",
+                "Save all plots as high-resolution PNG files."
+            ],
+            "sub_task": "Visualization of Results",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Interpret latent class trajectories and discuss the impact of organizational enablers and culture.",
+                "Synthesize findings regarding the interaction between training and baseline uncertainty.",
+                "Report all key numerical results (factor loadings, omega, LCA stats, class sizes, regression coefficients, CV accuracy, Pseudo-R-squared).",
+                "Discuss implications of the placebo test results and reference all generated plots.",
+                "Write the full Results section of the report."
+            ],
+            "sub_task": "Final Results Synthesis and Reporting",
+            "sub_task_agent": "researcher"
+        }
+    ]
+}

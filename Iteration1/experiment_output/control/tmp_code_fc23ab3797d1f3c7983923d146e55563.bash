@@ -1,0 +1,1 @@
+pip show factor-analyzer scikit-learn

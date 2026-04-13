@@ -1,0 +1,66 @@
+<!-- filename: reports/step_6_AI_Job_Security_Analysis.md -->
+### Results and Discussion
+
+#### 1. Data Preprocessing and Affective Disposition Modeling
+
+The initial phase of the analysis involved rigorous data preprocessing of the 2,603 respondent records to ensure the integrity of the subsequent modeling. Ordinal Likert scales were mapped to continuous integer ranges (−2 to +2), and "Not sure" responses were explicitly preserved as a distinct category to capture the state of employee uncertainty. 
+
+To address the high dimensionality and potential multicollinearity inherent in the 16 binary emotional attitude items (`QHD` block), an Exploratory Factor Analysis (EFA) was conducted. Recognizing the dichotomous nature of the variables, the EFA utilized a tetrachoric correlation matrix rather than standard Pearson correlations, preventing the artificial attenuation of relationships. The extraction yielded two distinct latent factors: **Positive Affect** (capturing emotions such as optimism, excitement, and empowerment) and **Negative Affect** (capturing anxiety, threat, and skepticism). Continuous factor scores were calculated for each respondent. This dimensional reduction successfully condensed the affective landscape into two orthogonal covariates, providing a robust, continuous measure of psychological disposition toward AI for the regression models.
+
+#### 2. Latent Class Trajectories of AI-Induced Job Security
+
+To move beyond traditional interval-based delta analysis, a Latent Class Analysis (LCA) was applied to the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security impacts. This person-centered approach assumes that the workforce is not monolithic but consists of unobserved subgroups experiencing distinct psychological trajectories regarding AI adoption.
+
+Models ranging from two to five classes were estimated. Model selection was driven by the Bayesian Information Criterion (BIC), which heavily penalizes over-parameterization to ensure a parsimonious fit, alongside Entropy, which measures classification certainty (values > 0.80 indicate excellent separation). As illustrated in <code>step_5_LCA_Model_Comparison_1_20260413_174623.png</code>, the 3-class model emerged as the optimal solution. It achieved the lowest BIC (14,592.21) compared to the 2-class (14,859.38), 4-class (14,601.47), and 5-class (14,642.06) models. Furthermore, the 3-class model demonstrated a high Entropy of 0.802, confirming that respondents were assigned to their respective classes with high statistical confidence.
+
+The LCA identified three distinct trajectory typologies (visualized in <code>step_5_LCA_Conditional_Probs_2_20260413_174623.png</code>):
+
+1. **Class 1: Resiliently Optimistic (60.9%, n = 1,531):** This majority class exhibits a robust and sustained positive outlook. Conditional response probabilities indicate that members of this class have a 90.0% probability of perceiving a positive current impact on their job security (46.2% "Slightly Positive," 43.8% "Significantly Positive"). This optimism is projected into the future, with an 82.6% probability of expecting positive impacts over the next three years. This cohort views AI as an augmenting force that enhances, rather than threatens, their professional stability.
+2. **Class 2: Stagnant Neutral (26.6%, n = 742):** This class is defined by inertia and a lack of perceived disruption. Members have a near-absolute 95.8% probability of reporting "No Impact" currently. Looking forward, 56.3% expect this lack of impact to persist, though a minority show signs of shifting toward slight optimism (24.4%) or slight pessimism (14.8%). This group likely represents employees in roles currently insulated from AI integration or those lacking the organizational awareness to gauge AI's trajectory.
+3. **Class 3: Anxiously Declining (12.5%, n = 330):** This vulnerable minority experiences AI as an immediate and escalating threat. Currently, 97.6% of this class reports negative impacts (75.5% "Slightly Negative," 22.1% "Significantly Negative"). Future expectations remain deeply pessimistic, with 79.1% expecting continued negative impacts. This class represents the primary target for mitigative human resources interventions.
+
+#### 3. Robustness and Placebo Testing
+
+In organizational research, structural variables such as company size and market capitalization can act as confounding variables, artificially inflating the apparent efficacy of organizational policies simply because larger companies have more resources. To ensure the integrity of the findings, a placebo test was conducted by regressing latent class membership solely on `Global Employee Size` and `Market Capitalization`.
+
+The overall placebo model yielded a negligible McFadden's Pseudo-R-squared of 0.0085, and the Likelihood Ratio test was not statistically significant (p = 0.4667). This indicates that organizational scale alone does not meaningfully dictate an employee's psychological trajectory regarding AI. However, to maintain maximum statistical rigor—given that one specific dummy variable (Market Capitalization $1B–$5B) showed marginal significance (p = 0.021)—these scale variables were retained as control covariates in the main multinomial model. This conservative approach ensures that the subsequent effects identified for culture and enablers are strictly isolated from mere resource advantages.
+
+#### 4. Predictors of Trajectory Membership: Multinomial Logistic Regression
+
+To determine the organizational and psychological catalysts that drive employees into specific trajectories, a multinomial logistic regression was estimated. The "Stagnant Neutral" class was designated as the reference category, allowing the analysis to isolate the factors that pull an employee out of inertia and into either active optimism or active anxiety. 
+
+The model demonstrated a robust fit, yielding a McFadden's Pseudo-R-squared of 0.1193—a highly satisfactory value for models predicting complex psychological states. Furthermore, 5-fold cross-validation resulted in an accuracy of 61.38% (SD = 2.38%), confirming the model's predictive stability on unseen data. To rigorously control for Type I errors across multiple comparisons, all p-values were subjected to Benjamini-Hochberg False Discovery Rate (FDR) correction. The full forest plot of odds ratios is visualized in <code>step_5_MNLogit_Forest_Plot_3_20260413_174623.png</code>.
+
+**The Impact of Organizational Enablers and Culture**
+The composite index of Organizational Enablers (`QKB_Enablers_Index`)—which aggregates the presence of clear AI strategies, ethical guidelines, tool access, and leadership support—emerged as the most potent structural predictor of positive trajectory membership. A one-unit increase in the enablers index significantly increased the odds of an employee belonging to the "Resiliently Optimistic" class relative to the "Stagnant Neutral" class by a factor of 2.85 (95% CI: [2.05, 3.96], FDR-adjusted p = 5.15e-09). 
+
+Similarly, a supportive company culture (`QGO_Culture_Index`), characterized by psychological safety, encouragement of experimentation, and learning from mistakes, significantly predicted membership in the "Resiliently Optimistic" class (Odds Ratio [OR] = 1.36, 95% CI: [1.16, 1.59], FDR-adjusted p = 0.0014). 
+
+Crucially, neither organizational enablers nor company culture significantly predicted membership in the "Anxiously Declining" class. This theoretical asymmetry suggests that organizational enablers act as *catalysts for optimism* rather than *shields against anxiety*. Their presence pulls employees out of stagnation into resilience, but their absence results in continued neutrality rather than actively driving fear.
+
+**The Role of Affective Dispositions**
+Psychological dispositions played a highly bifurcated role. `Positive_Affect` was a massive driver of the "Resiliently Optimistic" class (OR = 2.06, 95% CI: [1.73, 2.44], FDR-adjusted p = 5.03e-15). Conversely, `Negative_Affect` was the sole significant predictor of membership in the "Anxiously Declining" class (OR = 2.80, 95% CI: [2.07, 3.78], FDR-adjusted p = 4.39e-10). This indicates that active AI anxiety is deeply rooted in general psychological dispositions toward technology, underscoring that AI integration is as much an emotional transition as an operational one.
+
+**Interaction Effects: The Insufficiency of Isolated Interventions**
+A targeted moderation analysis was conducted to test whether specific, isolated HR interventions—namely, regular training (`QKB_1_4`) and employee involvement in AI development (`QKB_1_11`)—interacted to shift trajectory membership. The interaction term (`Training_x_Involvement`) was not statistically significant (OR = 1.02, FDR-adjusted p = 0.92). Furthermore, the isolated main effect of training on joining the "Resiliently Optimistic" class was non-significant after FDR correction (OR = 0.83, FDR-adjusted p = 0.11).
+
+This is a critical finding with profound practical implications. It demonstrates that isolated, "check-the-box" interventions (such as merely providing a training module) do not synergize in a vacuum to improve job security perceptions. Instead, the overwhelming significance of the composite `QKB_Enablers_Index` dictates that organizations must deploy a holistic, systemic ecosystem of support to move the needle on employee optimism.
+
+#### 5. Marginal Effects and Organizational Implications
+
+Because logistic regression odds ratios can be unintuitive to interpret in absolute terms, marginal effects were calculated to illustrate how the predicted probabilities of class membership shift across the range of key predictors, holding all other variables at their mean. These dynamics are visualized in <code>step_5_Marginal_Effects_4_20260413_174623.png</code>.
+
+**The Transformative Power of Enablers:**
+The marginal effects analysis reveals the massive leverage point that organizational enablers provide to leadership. At the minimum observed level of the `QKB_Enablers_Index`, an employee has a dominant 72.54% probability of being trapped in the "Stagnant Neutral" class, and only a 12.71% probability of being "Resiliently Optimistic." However, as the enablers index shifts to its maximum value, a dramatic inversion occurs: the probability of being "Resiliently Optimistic" skyrockets to 87.28%, while the probability of remaining "Stagnant Neutral" plummets to 8.32%. This visualizes the precise mechanism by which comprehensive AI policies effectively convert workforce uncertainty and stagnation into robust, forward-looking optimism.
+
+**The Bifurcation of Affect:**
+The marginal effects of affective dispositions further highlight the psychological divide. Moving from the minimum to the maximum of `Positive_Affect` increases the probability of being "Resiliently Optimistic" from 16.01% to 92.25%. Conversely, moving from the minimum to the maximum of `Negative_Affect` increases the probability of being in the "Anxiously Declining" class from a baseline of 4.73% up to a severe 71.99%.
+
+**The Flatline of Isolated Training:**
+Corroborating the lack of statistical significance in the regression model, the marginal effects plot for `Training` shows virtually flat trajectory lines. As isolated training increases from minimum to maximum, the probability of being "Resiliently Optimistic" actually drifts slightly downward (from 73.01% to 56.73%), while "Stagnant Neutral" drifts upward (20.34% to 31.58%). This visualizes the earlier conclusion: training without the surrounding scaffolding of strategy, culture, and ethical guidelines is ineffective at best, and potentially induces fatigue or confusion at worst.
+
+#### 6. Conclusion and Synthesis
+
+This analysis successfully replaces binary narratives of AI adoption with a nuanced, person-centered framework. The findings validate the hypothesis that AI-induced job security is experienced through distinct latent trajectories. The identification of the "Stagnant Neutral" class (26.6% of the workforce) represents a critical theoretical contribution; this group is not actively resistant, but rather represents untapped potential resting in a state of transitional inertia.
+
+The data unequivocally demonstrates that moving employees from neutral stagnation to resilient optimism requires a systemic organizational approach. The composite Enablers Index and a culture of psychological safety are the primary catalysts for this positive shift. The failure of isolated training interventions to predict optimism serves as a stark warning to organizational leaders against piecemeal HR strategies. Furthermore, the profound impact of Negative Affect on driving the "Anxiously Declining" trajectory highlights that change management cannot be purely operational. To successfully decouple AI-driven task evolution from perceived job displacement, organizations must address the psychological and emotional dimensions of AI adoption just as rigorously as the technical implementation.
