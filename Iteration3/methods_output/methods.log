@@ -1,0 +1,532 @@
+
+###### PROMPT BEGINS ########
+Human: You are provided with a data description and an idea for a scientific paper. Your task is to think about the methods to use in order to carry it out. If this is not first iteration, you will also be provided with the previous research plan along with some feedback on it. If this is the case, take into account the feedback provided when designing the new research plan.
+
+Follow these instructions:
+- generate a detailed description of the methodology that will be used to perform the research project.
+- The description should clearly outline the steps, techniques, and rationale derived from the exploratory data analysis (EDA).
+- The focus should be strictly on the methods and workflow for this specific project to be performed. **do not include** any discussion of future directions, future work, project extensions, or limitations.
+- The description should be written as if it were a senior researcher explaining to her research assistant how to perform the research necessary for this project.
+- Just provide the methods, do not add a sentence at the beginning saying showing your thinking process
+- Your report will be sent to coding agents. Thus, do not write code here.
+- The research plan should include no more than 8 steps. Each of these steps can have several substeps
+- If feedback is present, you are allowed to edit steps and also remove steps if they are not needed for new iterations
+
+Data description:
+# IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+
+Idea:
+**Title: Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability**
+
+This study replaces interval-based delta analysis with Latent Class Analysis (LCA) to categorize the 2,603 respondents into distinct psychological trajectory classes (e.g., "Resiliently Optimistic," "Anxiously Declining," and "Stagnant Neutral") based on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security. By applying a multinomial logistic regression, we determine how specific organizational enablers (`QKB`) and cultural attributes (`QGO`)—encoded as composite indices—predict membership in the "Resiliently Optimistic" versus "Anxiously Declining" classes. To address multicollinearity, we condense the 16 binary `QHD` emotional attitude items into a lower-dimensional latent "Affective Disposition" score, which serves as a covariate alongside baseline job profile (`HIDDG`) and sector (`QDB`). The research objective is to isolate the structural configurations—specifically, the interaction between "employee involvement in development" (QKB_1_11) and "regular training" (QKB_1_4)—that statistically increase the probability of an employee occupying a positive stability class. This approach provides a rigorous, non-linear framework for identifying the specific organizational policies that effectively decouple AI-driven task evolution from perceived job displacement.
+
+Previous research plan:
+1. **Data Preprocessing and Feature Engineering**
+    - Load the dataset, mapping '.' to NaN. Create a binary indicator for "Not sure" responses for `QEA_2` and `QEB_2`.
+    - Construct "Income Rank" by normalizing income bands within each country (`QDA`).
+    - Map ordinal variables (`QC`, `QGI`, `QGS`, `QGR`) to numeric scales and binary variables (`QHD`, `QGM`, `QF`, `QED_1`, `QKC`, `QGH`) to 0/1.
+    - Create a composite "Company Culture" index (`QGO_Index`) using Likert items. Create an "Organizational Enablers" index (`QKB_Index`) by averaging items, ensuring internal consistency via Cronbach’s alpha. To avoid multicollinearity in later steps, create a secondary `QKB_Index_Reduced` that excludes the specific "Regular Training" (`QKB_1_4`) and "Employee Involvement" (`QKB_1_11`) items.
+
+2. **Affective Disposition Modeling**
+    - Perform EFA on the 16 binary `QHD` items using a tetrachoric correlation matrix and WLSMV estimation.
+    - Extract two factors: "Positive Affect" and "Negative Affect" using oblique rotation. Validate using McDonald’s omega.
+    - Check the correlation between factors; if highly negatively correlated, treat them as a single "AI Sentiment" spectrum. Drop items with low communality or cross-loadings to ensure distinct factors.
+
+3. **Latent Class Analysis (LCA) of Job Security Trajectories**
+    - Perform LCA using `QEA_2` and `QEB_2` as categorical indicators. Include "Not sure" as a distinct category.
+    - Estimate models with 2–5 classes. Select the optimal model based on BIC, AIC, and Entropy (> 0.8). Compare these fit indices against a model treating "Not sure" as missing data to determine if "Uninformed" is a distinct psychological state.
+    - Assign each respondent to their most likely latent class.
+
+4. **Post-hoc Characterization of Classes**
+    - Compare classes using ANOVA (continuous) and Chi-square (categorical) on `QC` (AI usage), `QGN` (AI posture), and `QED_1` (Company AI goals).
+    - Calculate effect sizes (Cohen’s d or Eta-squared) to determine if the "Stagnant Neutral" class is "unexposed" (low usage/no goals) or simply "inert."
+
+5. **Multinomial Logistic Regression with Random Intercepts**
+    - Regress latent class membership on `QKB_Index_Reduced`, `QGO_Index`, "Positive Affect," "Negative Affect," `HIDDG`, and `QDB`.
+    - Include a random intercept for `QDA` (Country) to account for cross-national variations.
+    - Check VIFs to ensure no multicollinearity. Report McFadden’s Pseudo-R-squared.
+
+6. **Mediation and Moderation Analysis**
+    - Use a Generalized Structural Equation Model (GSEM) with a multinomial logit link to test if `QKB_Index_Reduced` mediates the effect of "Regular Training" (`QKB_1_4`) on class membership.
+    - Include a path from `QKB_Index_Reduced` to "Negative Affect" to test if enablers act as a buffer against anxiety.
+    - Control for "Prior AI Exposure" (`QC` or `QGN`) to ensure the indirect effect is not confounded by company maturity.
+
+7. **Sensitivity Analysis**
+    - Re-run the LCA excluding "Not sure" respondents; compare class proportions and item-response probabilities against the original model to assess stability.
+    - Within the "Anxiously Declining" class, regress "Negative Affect" on "Employee Involvement" (`QKB_1_11`) to test for buffering effects.
+
+8. **Marginal Effects and Visualization**
+    - Calculate and plot predicted probabilities of class membership across ranges of `QKB_Index` and `QGO_Index`.
+    - Visualize the interaction between "Employee Involvement" and "Regular Training" regarding the probability of "Resiliently Optimistic" class membership.
+    - Apply FDR correction to all p-values and report odds ratios with 95% confidence intervals. Discuss country-level dominance in specific classes as a proxy for national labor market context.
+
+Feedback on previous research plan:
+The current analysis provides a sophisticated, non-linear view of job security, successfully moving beyond simple correlations. However, several methodological and conceptual gaps must be addressed to ensure the findings are robust enough for publication.
+
+**1. Critical Methodological Weaknesses**
+*   **LCA Algorithmic Artifacts:** The 4-class solution, while "theoretically interpretable," achieved an entropy of 0.0, indicating a mathematical collapse. Relying on an "algorithmic artifact" is scientifically indefensible. You must re-evaluate the 3-class model or use a different estimation approach (e.g., latent profile analysis with continuous indicators if the ordinal nature allows, or a more constrained LCA) to ensure the classes are statistically distinct and not just artifacts of the data distribution.
+*   **The "Affective Disposition" Inversion:** The report notes an "inversion of factor score axes" in the EFA, which led to counterintuitive results. This is a red flag for data integrity. You must re-run the EFA, ensure the factor loadings are correctly interpreted (e.g., by checking the sign of the loadings against the item content), and re-verify the regression coefficients. Do not proceed with inverted interpretations.
+*   **Mediation Failure:** The failure of the GSEM to converge is a significant finding, but it was dismissed too quickly. Instead of abandoning the mediation hypothesis, consider that the "Affective Disposition" might be a *moderator* rather than a *mediator*. If organizational enablers change the *impact* of negative affect on job security, the model will converge.
+
+**2. Addressing the "Curse of Knowledge"**
+*   The finding that "Employee Involvement" (`QKB_1_11`) increases the probability of being "Anxiously Declining" is the most novel insight in the study. You have currently framed this as a "curse of knowledge." To strengthen this, perform a post-hoc analysis: does this effect hold only for employees with high "AI Task Comfort" (`QGM`)? If so, you have identified a specific segment (the "informed skeptics") that requires targeted management intervention.
+
+**3. Actionable Improvements for Future Iterations**
+*   **Simplify the Culture Index:** The low internal consistency ($α = 0.441$) of `QGO_Index` confirms it is not a single construct. Stop using the composite. Instead, select the single item that most strongly correlates with the "Anxiously Declining" class (e.g., "learning from mistakes") and use it as a standalone predictor. This increases interpretability and removes the noise of the other four items.
+*   **Refine the "Stagnant Neutral" Class:** Your results suggest this class is a mix of "unexposed" and "inert" employees. Use the `QA_1_1` (binary: "I do not currently use AI") to split this class. If the "Stagnant" class is primarily composed of non-users, it is not a psychological state but a usage state. This distinction is vital for policy recommendations.
+*   **Focus on the "Resiliently Optimistic" vs. "Anxiously Declining" Contrast:** Rather than a 4-class multinomial model, consider a binary logistic regression comparing only these two extreme classes. This will provide much clearer, more actionable insights for organizational leaders on how to move employees from the "Anxious" to the "Resilient" state.
+
+**4. Forward-Looking Insight**
+*   The data suggests that "Training" and "Involvement" are additive, not multiplicative. This is a powerful policy conclusion: organizations cannot "buy" their way out of AI anxiety with training alone; they must pair it with structural involvement. Frame the next iteration around this "Dual-Pillar" requirement for organizational stability.
+
+
+Respond in this format:
+
+\\begin{METHODS}
+<METHODS>
+\\end{METHODS}
+
+In <METHODS> put the methods you have generated.
+
+###### PROMPT ENDS ########
+
+\begin{METHODS}
+1. **Data Refinement and Variable Selection**
+   - Re-process the dataset, treating '.' as NaN. Map all binary variables (QHD, QGM, QF, QED_1, QKC, QGH) to 0/1.
+   - Map ordinal variables (QC, QGI, QGS, QGR) to numeric scales. For income (QDF), generate a country-specific ordinal rank.
+   - Discard the composite `QGO_Index` due to low internal consistency. Instead, identify the single item from the `QGO` block that shows the strongest bivariate correlation with the "Anxiously Declining" class (e.g., "learning from mistakes") and use it as a standalone predictor.
+   - Create a binary "Usage State" variable using `QA_1_1` to distinguish between "Non-users" and "Active users" to clarify the composition of the "Stagnant" group.
+
+2. **Refined Affective Disposition Modeling**
+   - Re-run the EFA on the 16 binary `QHD` items using a tetrachoric correlation matrix. 
+   - Carefully inspect factor loadings to ensure the sign of the loadings aligns with the item content (e.g., "Optimistic" vs. "Worried"). 
+   - Extract two distinct factors: "Positive Affect" and "Negative Affect." Validate the factor structure using McDonald’s omega and ensure the axes are correctly oriented before calculating factor scores for each respondent.
+
+3. **Latent Class Analysis (LCA) Re-estimation**
+   - Re-estimate the LCA using `QEA_2` and `QEB_2` as categorical indicators. 
+   - Restrict the model to a 3-class solution to avoid the mathematical collapse (entropy = 0.0) observed in the 4-class model. 
+   - Use BIC, AIC, and Entropy to confirm the 3-class model provides statistically distinct, interpretable groups (e.g., "Resiliently Optimistic," "Anxiously Declining," and "Stagnant Neutral"). 
+   - Assign each respondent to their most likely latent class.
+
+4. **Binary Logistic Regression: The "Resilience" Contrast**
+   - Filter the dataset to include only respondents in the "Resiliently Optimistic" and "Anxiously Declining" classes.
+   - Perform a binary logistic regression to predict class membership (1 = Resilient, 0 = Anxious).
+   - Include as predictors: "Positive Affect," "Negative Affect," the standalone `QGO` item, `HIDDG` (job profile), and `QDB` (sector).
+   - Include a random intercept for `QDA` (Country) to account for cross-national labor market variations.
+
+5. **Testing the "Dual-Pillar" Hypothesis**
+   - To test the additive effect of organizational enablers, include `QKB_1_4` (Regular Training) and `QKB_1_11` (Employee Involvement) as separate, additive predictors in the logistic regression model.
+   - Evaluate the coefficients for both variables to determine if they independently increase the probability of "Resiliently Optimistic" membership.
+
+6. **Moderation Analysis: The "Informed Skeptic" Segment**
+   - Test whether the effect of "Employee Involvement" (`QKB_1_11`) on job security is moderated by "AI Task Comfort" (`QGM`).
+   - Create an interaction term between `QKB_1_11` and the `QGM` composite score.
+   - If the interaction is significant, perform simple slopes analysis to determine if "Employee Involvement" is counter-productive (increasing anxiety) specifically for those with high AI task comfort, confirming the "informed skeptic" phenomenon.
+
+7. **Sensitivity and Robustness Checks**
+   - Re-run the logistic regression model excluding "Not sure" respondents to ensure the findings are not driven by uncertainty.
+   - Compare the "Stagnant Neutral" class against the "Usage State" variable (`QA_1_1`) to determine if this class is primarily composed of non-users. Report the proportion of non-users within this class to clarify if it represents a psychological state or a lack of exposure.
+
+8. **Marginal Effects and Visualization**
+   - Calculate and plot the predicted probabilities of being in the "Resiliently Optimistic" class across different levels of "Regular Training" and "Employee Involvement."
+   - Report odds ratios with 95% confidence intervals for all predictors. Apply FDR correction to all p-values to ensure statistical rigor.
+\end{METHODS}
+
+
+###### PROMPT BEGINS ########
+Human: You are provided with a data description, an idea, a research plan to carry out the idea, and some suggestions to improve the research plan. 
+- Your tasks is to improve the current research plan taking into account the suggestions, if they make sense. 
+- Do not write code in the research plan. 
+- Another agent will take your report and will write code according to it. 
+- The research plan should include no more than 8 steps. Each of these steps can have several substeps.
+
+Data description:
+# IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+
+Idea:
+**Title: Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability**
+
+This study replaces interval-based delta analysis with Latent Class Analysis (LCA) to categorize the 2,603 respondents into distinct psychological trajectory classes (e.g., "Resiliently Optimistic," "Anxiously Declining," and "Stagnant Neutral") based on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security. By applying a multinomial logistic regression, we determine how specific organizational enablers (`QKB`) and cultural attributes (`QGO`)—encoded as composite indices—predict membership in the "Resiliently Optimistic" versus "Anxiously Declining" classes. To address multicollinearity, we condense the 16 binary `QHD` emotional attitude items into a lower-dimensional latent "Affective Disposition" score, which serves as a covariate alongside baseline job profile (`HIDDG`) and sector (`QDB`). The research objective is to isolate the structural configurations—specifically, the interaction between "employee involvement in development" (QKB_1_11) and "regular training" (QKB_1_4)—that statistically increase the probability of an employee occupying a positive stability class. This approach provides a rigorous, non-linear framework for identifying the specific organizational policies that effectively decouple AI-driven task evolution from perceived job displacement.
+
+Current research plan:
+1. **Data Refinement and Variable Selection**
+   - Re-process the dataset, treating '.' as NaN. Map all binary variables (QHD, QGM, QF, QED_1, QKC, QGH) to 0/1.
+   - Map ordinal variables (QC, QGI, QGS, QGR) to numeric scales. For income (QDF), generate a country-specific ordinal rank.
+   - Discard the composite `QGO_Index` due to low internal consistency. Instead, identify the single item from the `QGO` block that shows the strongest bivariate correlation with the "Anxiously Declining" class (e.g., "learning from mistakes") and use it as a standalone predictor.
+   - Create a binary "Usage State" variable using `QA_1_1` to distinguish between "Non-users" and "Active users" to clarify the composition of the "Stagnant" group.
+
+2. **Refined Affective Disposition Modeling**
+   - Re-run the EFA on the 16 binary `QHD` items using a tetrachoric correlation matrix. 
+   - Carefully inspect factor loadings to ensure the sign of the loadings aligns with the item content (e.g., "Optimistic" vs. "Worried"). 
+   - Extract two distinct factors: "Positive Affect" and "Negative Affect." Validate the factor structure using McDonald’s omega and ensure the axes are correctly oriented before calculating factor scores for each respondent.
+
+3. **Latent Class Analysis (LCA) Re-estimation**
+   - Re-estimate the LCA using `QEA_2` and `QEB_2` as categorical indicators. 
+   - Restrict the model to a 3-class solution to avoid the mathematical collapse (entropy = 0.0) observed in the 4-class model. 
+   - Use BIC, AIC, and Entropy to confirm the 3-class model provides statistically distinct, interpretable groups (e.g., "Resiliently Optimistic," "Anxiously Declining," and "Stagnant Neutral"). 
+   - Assign each respondent to their most likely latent class.
+
+4. **Binary Logistic Regression: The "Resilience" Contrast**
+   - Filter the dataset to include only respondents in the "Resiliently Optimistic" and "Anxiously Declining" classes.
+   - Perform a binary logistic regression to predict class membership (1 = Resilient, 0 = Anxious).
+   - Include as predictors: "Positive Affect," "Negative Affect," the standalone `QGO` item, `HIDDG` (job profile), and `QDB` (sector).
+   - Include a random intercept for `QDA` (Country) to account for cross-national labor market variations.
+
+5. **Testing the "Dual-Pillar" Hypothesis**
+   - To test the additive effect of organizational enablers, include `QKB_1_4` (Regular Training) and `QKB_1_11` (Employee Involvement) as separate, additive predictors in the logistic regression model.
+   - Evaluate the coefficients for both variables to determine if they independently increase the probability of "Resiliently Optimistic" membership.
+
+6. **Moderation Analysis: The "Informed Skeptic" Segment**
+   - Test whether the effect of "Employee Involvement" (`QKB_1_11`) on job security is moderated by "AI Task Comfort" (`QGM`).
+   - Create an interaction term between `QKB_1_11` and the `QGM` composite score.
+   - If the interaction is significant, perform simple slopes analysis to determine if "Employee Involvement" is counter-productive (increasing anxiety) specifically for those with high AI task comfort, confirming the "informed skeptic" phenomenon.
+
+7. **Sensitivity and Robustness Checks**
+   - Re-run the logistic regression model excluding "Not sure" respondents to ensure the findings are not driven by uncertainty.
+   - Compare the "Stagnant Neutral" class against the "Usage State" variable (`QA_1_1`) to determine if this class is primarily composed of non-users. Report the proportion of non-users within this class to clarify if it represents a psychological state or a lack of exposure.
+
+8. **Marginal Effects and Visualization**
+   - Calculate and plot the predicted probabilities of being in the "Resiliently Optimistic" class across different levels of "Regular Training" and "Employee Involvement."
+   - Report odds ratios with 95% confidence intervals for all predictors. Apply FDR correction to all p-values to ensure statistical rigor.
+
+Suggestions:
+
+
+        Suggestion #1:
+        content='The research plan is well-structured and addresses the previous feedback effectively. I have only a few minor suggestions to further strengthen the robustness and clarity of the analysis:\n\n1. **Refine the "Stagnant Neutral" Class Definition:** In Step 7, you mention comparing the "Stagnant Neutral" class against the "Usage State" variable. To make this more rigorous, consider performing a Chi-square test of independence between the 3-class membership and the binary `QA_1_1` variable. This will statistically confirm whether the "Stagnant" class is significantly over-represented by non-users, providing a clearer empirical basis for your policy recommendations.\n\n2. **Standardize Predictors for Interpretation:** Since you are using a binary logistic regression (Step 4) to compare "Resilient" vs. "Anxious" classes, ensure that all continuous predictors (e.g., "Positive Affect," "Negative Affect," and the `QGO` item) are **z-standardized** before running the model. This will allow you to directly compare the effect sizes (odds ratios) of psychological traits versus organizational enablers, which is crucial for your "Dual-Pillar" hypothesis.\n\n3. **Clarify the "Not Sure" Handling:** In Step 3, you mention using `QEA_2` and `QEB_2` as categorical indicators. Ensure that the "Not sure" responses are explicitly handled as a separate category in the LCA model (rather than just dropping them), as "Not sure" may represent a distinct psychological state of "AI-indifference" or "lack of awareness" that is theoretically relevant to your study.\n\n4. **Model Validation:** Given the previous issues with model convergence and entropy, ensure that you report the **classification table (confusion matrix)** for the binary logistic regression in Step 4. This will demonstrate how well your model actually distinguishes between the "Resilient" and "Anxious" groups, providing a final check on the validity of your "Dual-Pillar" findings.\n\nThe plan is otherwise excellent and ready for implementation.' additional_kwargs={} response_metadata={} id='c0a225c9-db49-4037-81bd-c24d7c4f9360'
+
+
+
+        Suggestion #2:
+        content='The research plan is well-structured and directly addresses the feedback provided. However, to ensure the robustness of the findings and the clarity of the final report, consider the following minor refinements:\n\n1. **Refine the "Stagnant Neutral" definition:** In Step 7, you propose comparing the "Stagnant Neutral" class against the "Usage State" variable. To make this more rigorous, perform a **Chi-square test of independence** between the "Stagnant Neutral" class membership and the `QA_1_1` binary usage variable. This will provide a statistical basis for your claim that this class is primarily a "usage state" rather than a "psychological state."\n\n2. **Clarify the "Dual-Pillar" additive model:** In Step 5, you mention testing the additive effect of `QKB_1_4` and `QKB_1_11`. To explicitly demonstrate that these are additive rather than multiplicative, include a model comparison: compare a model with only the main effects against a model that includes the interaction term (`QKB_1_4 * QKB_1_11`). If the interaction term is non-significant, you have empirical evidence to support the "Dual-Pillar" additive hypothesis.\n\n3. **Standardize the "Affective Disposition" scores:** Since you are using these as predictors in a logistic regression, ensure that the factor scores extracted in Step 2 are **z-standardized** (mean=0, SD=1). This will allow you to compare the relative importance of "Positive Affect" and "Negative Affect" directly via their odds ratios in the logistic regression.\n\n4. **Address the "Not Sure" category:** In Step 3, you mention using `QEA_2` and `QEB_2` as categorical indicators. Ensure that the "Not sure" responses are handled consistently. If you treat them as missing data, explicitly state the assumption that "Not sure" is missing at random (MAR). If you treat them as a distinct category, ensure the LCA model can accommodate this without causing convergence issues.\n\n5. **Reporting:** When reporting the "Informed Skeptic" segment (Step 6), ensure you report the **Johnson-Neyman interval** if the interaction is significant. This will identify the specific range of "AI Task Comfort" scores where "Employee Involvement" transitions from being beneficial to being counter-productive, providing a much more precise management recommendation.' additional_kwargs={} response_metadata={} id='66da55b9-3528-48a8-99fa-b033137af90e'
+
+
+
+        Suggestion #3:
+        content='The research plan is well-structured and directly addresses the feedback provided. I have only two minor suggestions to further strengthen the robustness of the analysis:\n\n1. **Refine the "Stagnant Neutral" definition:** In Step 7, you mention comparing the "Stagnant Neutral" class against the "Usage State" variable. To make this more rigorous, consider performing a **Chi-square test of independence** between the latent class membership and the "Usage State" (`QA_1_1`). This will provide a statistical basis for your claim that this class is primarily driven by lack of exposure rather than a distinct psychological profile.\n\n2. **Address the "Not Sure" responses in LCA:** In Step 3, you mention using `QEA_2` and `QEB_2` as categorical indicators. Since these variables contain a "Not sure" option, ensure that you handle these as a distinct category in the LCA (rather than just treating them as missing/NaN). This is important because "Not sure" may represent a specific latent state of "AI-Ambivalence" that could be a precursor to the "Stagnant Neutral" class. If the model fails to converge with "Not sure" as a category, only then should you treat them as missing.\n\nThe plan is otherwise excellent and ready for implementation.' additional_kwargs={} response_metadata={} id='4b6ba014-5cd6-4cf2-9d4e-5ddd4d3a00ed'
+
+
+
+**Respond in this format**:
+
+\\begin{METHODS}
+<METHODS>
+\\end{METHODS}
+
+In <METHODS> put the new research methodology. Reply with the new research methodology, no preamble or comment at the very beginning (e.g. alright team...).
+
+###### PROMPT ENDS ########
+
+\begin{METHODS}
+1. **Data Refinement and Variable Selection**
+   - Process the dataset, treating '.' as NaN. Map all binary variables (QHD, QGM, QF, QED_1, QKC, QGH) to 0/1.
+   - Map ordinal variables (QC, QGI, QGS, QGR) to numeric scales. For income (QDF), generate a country-specific ordinal rank.
+   - Identify the single item from the `QGO` block with the strongest bivariate correlation with the "Anxiously Declining" class to serve as a proxy for organizational culture.
+   - Create a binary "Usage State" variable using `QA_1_1` (Non-users vs. Active users).
+
+2. **Affective Disposition Modeling**
+   - Perform EFA on the 16 binary `QHD` items using a tetrachoric correlation matrix.
+   - Extract two factors: "Positive Affect" and "Negative Affect." Validate using McDonald’s omega.
+   - Z-standardize the resulting factor scores (mean=0, SD=1) to ensure comparability of coefficients in subsequent regression models.
+
+3. **Latent Class Analysis (LCA) Estimation**
+   - Estimate the LCA using `QEA_2` and `QEB_2` as categorical indicators.
+   - Treat "Not sure" responses as a distinct category in the LCA to capture "AI-Ambivalence." If the model fails to converge, treat "Not sure" as missing data (MAR).
+   - Restrict to a 3-class solution ("Resiliently Optimistic," "Anxiously Declining," "Stagnant Neutral") and validate using BIC, AIC, and Entropy.
+
+4. **Binary Logistic Regression: The "Resilience" Contrast**
+   - Filter the dataset to include only "Resiliently Optimistic" and "Anxiously Declining" classes.
+   - Perform binary logistic regression (1 = Resilient, 0 = Anxious) using z-standardized "Positive Affect," "Negative Affect," the `QGO` proxy, `HIDDG` (job profile), and `QDB` (sector) as predictors.
+   - Include a random intercept for `QDA` (Country). Report the confusion matrix to validate classification performance.
+
+5. **Testing the "Dual-Pillar" Hypothesis**
+   - Include `QKB_1_4` (Regular Training) and `QKB_1_11` (Employee Involvement) as predictors in the logistic regression.
+   - Perform a model comparison: compare the main-effects model against a model including the interaction term (`QKB_1_4 * QKB_1_11`) to test if the "Dual-Pillar" effect is additive or multiplicative.
+
+6. **Moderation Analysis: The "Informed Skeptic" Segment**
+   - Create an interaction term between `QKB_1_11` (Employee Involvement) and the `QGM` (AI Task Comfort) composite score.
+   - If significant, perform simple slopes analysis and calculate the Johnson-Neyman interval to identify the specific range of `QGM` where involvement becomes counter-productive.
+
+7. **Sensitivity and Robustness Checks**
+   - Perform a Chi-square test of independence between the 3-class membership and the "Usage State" (`QA_1_1`) to determine if the "Stagnant Neutral" class is statistically over-represented by non-users.
+   - Re-run the logistic regression excluding "Not sure" respondents to ensure findings are not driven by uncertainty.
+
+8. **Marginal Effects and Visualization**
+   - Calculate and plot predicted probabilities of "Resiliently Optimistic" membership across levels of "Regular Training" and "Employee Involvement."
+   - Report odds ratios with 95% confidence intervals for all predictors, applying FDR correction to all p-values.
+\end{METHODS}
+
