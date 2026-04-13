@@ -1,0 +1,10 @@
+**Title: The "AI-Task Congruence" Hypothesis: Assessing the Alignment between AI-Task Comfort and Actual AI-Usage Patterns as a Predictor of Job Security.**
+
+Previous iterations have established that organizational enablers (training, strategy) and affective dispositions (anxiety, skepticism) are primary drivers of job security, while participatory models (involvement) show diminishing returns. However, these models treat "AI usage" as a monolithic frequency variable (`QC`) and "Task Comfort" (`QGM`) as a static binary preference. 
+
+I hypothesize that the **mismatch** between an employee's *stated comfort* with specific AI-augmented tasks (e.g., "I am comfortable with AI summarizing") and their *actual reported AI usage frequency* (or lack thereof) serves as a latent indicator of "Role Incongruence," which is a stronger predictor of the "Anxiously Declining" class than general organizational enablers. 
+
+**Proposed Methodology:**
+1. **Feature Engineering:** Create a "Congruence Score" by calculating the distance between the vector of tasks an employee is comfortable with (`QGM` block) and the tasks they are actually performing with AI (inferred from `QGI` hours saved and `QEA` impact dimensions).
+2. **Interaction Analysis:** Test the interaction between this "Congruence Score" and "Company AI Posture" (`QGN`). I hypothesize that high-posture companies (those "transforming most processes") that fail to align task-comfort with actual tool deployment create a "Performance-Expectation Gap," which significantly increases the probability of an employee falling into the "Anxiously Declining" class.
+3. **Validation:** Use a Random Forest classifier to determine if this "Congruence Score" provides higher feature importance than the previously identified "Affective Disposition" factors, thereby shifting the focus from *psychological state* to *operational alignment* as the primary mechanism for job security.
