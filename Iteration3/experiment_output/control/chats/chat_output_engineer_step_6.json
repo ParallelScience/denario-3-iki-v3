@@ -1,0 +1,475 @@
+[
+  {
+    "name": "control_starter",
+    "content": "",
+    "timestamp": "2026-04-13 20:02:24",
+    "cost": {
+      "Agent": [
+        "control_starter"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.0010237500000000001
+      ],
+      "Prompt Tokens": [
+        3825
+      ],
+      "Completion Tokens": [
+        45
+      ],
+      "Total Tokens": [
+        3870
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "\n**Step number:** 6 out of 7.\n\n**Sub-task:** Visualization of Results\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Generate a heatmap/bar chart of LCA class-conditional item probabilities.\n- Create a confusion matrix for the logistic regression classifier.\n- Plot predicted probabilities of class membership across training/involvement levels.\n- Create a simple slopes plot for the Informed Skeptic moderation and an odds ratio plot with 95% CIs.\n- Save all plots as high-resolution PNG files.\n\n**Status:** in progress \u23f3\n",
+    "timestamp": "2026-04-13 20:02:24",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "engineer",
+    "content": "**Code Explanation:**\n\nThe provided Python script generates five key visualizations based on the results from the previous steps:\n1. **LCA Class-Conditional Probabilities Heatmap**: Uses the dataset from Step 3 to compute the empirical distribution of responses (from -2 to +2) for current and future job security within each Latent Class. The resulting heatmap visualizes the probability of each response category conditional on class membership.\n2. **Confusion Matrix**: Re-fits the standard logistic regression model from Step 4 on the filtered dataset to predict membership in the \"Resiliently Optimistic\" class versus the \"Anxiously Declining\" class. The predictions are compared against the true labels to generate a confusion matrix heatmap.\n3. **Predicted Probabilities Contour Plot**: Uses the \"Dual-Pillar\" interaction model from Step 5 to predict the probability of being \"Resiliently Optimistic\" across a 2D grid of values for `QKB_1_4` (Regular Training) and `QKB_1_11` (Employee Involvement), holding all other variables at their means or reference categories. The axes represent the 1-5 Likert scale of importance.\n4. **Simple Slopes Plot**: Visualizes the moderation effect of `QGM_Composite` (AI Task Comfort) on the relationship between `QKB_1_11` (Employee Involvement) and the probability of being \"Resiliently Optimistic\". The plot displays three lines corresponding to Low (-1 SD), Mean, and High (+1 SD) levels of `QGM_Composite`.\n5. **Odds Ratios Plot**: Loads the logistic regression results from Step 4 and plots the Odds Ratios along with their 95% Confidence Intervals for all predictors (excluding the intercept and variance components). A vertical reference line is added at OR = 1.\n\nAll plots are saved as high-resolution PNG files in the `data/` directory, and their file paths are printed to the console.\n\n**Python Code:**\n\n```python\nimport sys\nimport os\nimport time\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport statsmodels.api as sm\nfrom sklearn.metrics import confusion_matrix\n\ndef truncate_label(label, max_len=40):\n    \"\"\"\n    Truncates a string label to a maximum length, appending an ellipsis if truncated.\n    \n    Parameters:\n    label (str): The original string label.\n    max_len (int): The maximum allowed length for the label.\n    \n    Returns:\n    str: The truncated label.\n    \"\"\"\n    if len(label) > max_len:\n        return label[:max_len] + '...'\n    return label\n\nif __name__ == '__main__':\n    plt.rcParams['text.usetex'] = False\n    \n    data_dir = 'data'\n    timestamp = int(time.time())\n    \n    print(\"Generating LCA class-conditional probabilities heatmap...\")\n    df3 = pd.read_csv(os.path.join(data_dir, 'processed_data_step3.csv'))\n    \n    fig1, axes1 = plt.subplots(1, 2, figsize=(14, 6), sharey=True)\n    \n    for i, col in enumerate(['Job_Security_Current', 'Job_Security_Future']):\n        prop_df = df3.groupby(['LCA_Class_Name', col]).size().unstack(fill_value=0)\n        prop_df = prop_df.div(prop_df.sum(axis=1), axis=0)\n        sns.heatmap(prop_df, annot=True, fmt=\".2f\", cmap=\"YlGnBu\", ax=axes1[i], vmin=0, vmax=1)\n        axes1[i].set_title('Item Probabilities: ' + col)\n        axes1[i].set_xlabel('Response Category (-2 to +2)')\n        if i == 0:\n            axes1[i].set_ylabel('LCA Class')\n        else:\n            axes1[i].set_ylabel('')\n            \n    plt.tight_layout()\n    p1_path = os.path.join(data_dir, 'lca_class_conditional_probs_1_' + str(timestamp) + '.png')\n    plt.savefig(p1_path, dpi=300)\n    plt.close(fig1)\n    print(\"LCA class-conditional probabilities heatmap saved to \" + p1_path)\n    \n    print(\"Generating confusion matrix plot...\")\n    df5 = pd.read_csv(os.path.join(data_dir, 'processed_data_step5.csv'))\n    exog_cols = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11', 'HIDDG', 'QDB', 'QDA']\n    exog_df = pd.get_dummies(df5[exog_cols], columns=['HIDDG', 'QDB', 'QDA'], drop_first=True, dtype=float)\n    exog_df.insert(0, 'Intercept', 1.0)\n    logit_model = sm.Logit(df5['Target'], exog_df)\n    logit_result = logit_model.fit(disp=0)\n    preds_prob = logit_result.predict(exog_df)\n    preds_class = (preds_prob > 0.5).astype(int)\n    cm = confusion_matrix(df5['Target'], preds_class)\n    \n    fig2, ax2 = plt.subplots(figsize=(6, 5))\n    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax2, \n                xticklabels=['Anxiously Declining', 'Resiliently Optimistic'],\n                yticklabels=['Anxiously Declining', 'Resiliently Optimistic'])\n    ax2.set_xlabel('Predicted Class')\n    ax2.set_ylabel('Actual Class')\n    ax2.set_title('Confusion Matrix: Logistic Regression Classifier')\n    plt.tight_layout()\n    p2_path = os.path.join(data_dir, 'confusion_matrix_2_' + str(timestamp) + '.png')\n    plt.savefig(p2_path, dpi=300)\n    plt.close(fig2)\n    print(\"Confusion matrix plot saved to \" + p2_path)\n    \n    print(\"Generating predicted probabilities contour plot...\")\n    df5['QKB_1_4_x_QKB_1_11'] = df5['QKB_1_4'] * df5['QKB_1_11']\n    exog_cols_dual = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11', 'QKB_1_4_x_QKB_1_11', 'HIDDG', 'QDB']\n    exog_df_dual = pd.get_dummies(df5[exog_cols_dual], columns=['HIDDG', 'QDB'], drop_first=True, dtype=float)\n    exog_df_dual.insert(0, 'Intercept', 1.0)\n    logit_dual = sm.Logit(df5['Target'], exog_df_dual)\n    result_dual = logit_dual.fit(disp=0)\n    \n    qkb_range = np.linspace(1, 5, 50)\n    X_grid, Y_grid = np.meshgrid(qkb_range, qkb_range)\n    grid_df = pd.DataFrame({\n        'QKB_1_4': X_grid.flatten(),\n        'QKB_1_11': Y_grid.flatten()\n    })\n    grid_df['QKB_1_4_x_QKB_1_11'] = grid_df['QKB_1_4'] * grid_df['QKB_1_11']\n    grid_df['Positive_Affect'] = df5['Positive_Affect'].mean()\n    grid_df['Negative_Affect'] = df5['Negative_Affect'].mean()\n    \n    for col in exog_df_dual.columns:\n        if col not in grid_df.columns:\n            grid_df[col] = 0.0\n            \n    grid_df = grid_df[exog_df_dual.columns]\n    probs = result_dual.predict(grid_df).values.reshape(X_grid.shape)\n    \n    fig3, ax3 = plt.subplots(figsize=(8, 6))\n    contour = ax3.contourf(X_grid, Y_grid, probs, levels=20, cmap='viridis')\n    cbar = plt.colorbar(contour, ax=ax3)\n    cbar.set_label('Probability of \"Resiliently Optimistic\"')\n    ax3.set_xlabel('Regular Training (QKB_1_4)')\n    ax3.set_ylabel('Employee Involvement (QKB_1_11)')\n    ax3.set_title('Predicted Probability of Resiliently Optimistic Class')\n    plt.tight_layout()\n    p3_path = os.path.join(data_dir, 'predicted_probabilities_3_' + str(timestamp) + '.png')\n    plt.savefig(p3_path, dpi=300)\n    plt.close(fig3)\n    print(\"Predicted probabilities plot saved to \" + p3_path)\n    \n    print(\"Generating simple slopes plot...\")\n    df5['QGM_Centered'] = df5['QGM_Composite'] - df5['QGM_Composite'].mean()\n    df5['QKB_1_11_Centered'] = df5['QKB_1_11'] - df5['QKB_1_11'].mean()\n    df5['QKB_1_11_x_QGM'] = df5['QKB_1_11_Centered'] * df5['QGM_Centered']\n    \n    exog_cols_mod = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11_Centered', 'QGM_Centered', 'QKB_1_11_x_QGM', 'HIDDG', 'QDB']\n    exog_df_mod = pd.get_dummies(df5[exog_cols_mod], columns=['HIDDG', 'QDB'], drop_first=True, dtype=float)\n    exog_df_mod.insert(0, 'Intercept', 1.0)\n    logit_mod = sm.Logit(df5['Target'], exog_df_mod)\n    result_mod = logit_mod.fit(disp=0)\n    \n    qgm_sd = df5['QGM_Composite'].std()\n    qgm_levels = {'Low (-1 SD)': -qgm_sd, 'Mean': 0, 'High (+1 SD)': qgm_sd}\n    qkb_vals = np.linspace(df5['QKB_1_11_Centered'].min(), df5['QKB_1_11_Centered'].max(), 100)\n    \n    fig4, ax4 = plt.subplots(figsize=(8, 6))\n    for label, qgm_val in qgm_levels.items():\n        slopes_df = pd.DataFrame({'QKB_1_11_Centered': qkb_vals})\n        slopes_df['QGM_Centered'] = qgm_val\n        slopes_df['QKB_1_11_x_QGM'] = slopes_df['QKB_1_11_Centered'] * slopes_df['QGM_Centered']\n        slopes_df['Positive_Affect'] = df5['Positive_Affect'].mean()\n        slopes_df['Negative_Affect'] = df5['Negative_Affect'].mean()\n        slopes_df['QKB_1_4'] = df5['QKB_1_4'].mean()\n        for col in exog_df_mod.columns:\n            if col not in slopes_df.columns:\n                slopes_df[col] = 0.0\n        slopes_df = slopes_df[exog_df_mod.columns]\n        \n        log_odds = np.dot(slopes_df, result_mod.params)\n        probs_mod = 1 / (1 + np.exp(-log_odds))\n        \n        ax4.plot(qkb_vals + df5['QKB_1_11'].mean(), probs_mod, label='QGM: ' + label, linewidth=2)\n        \n    ax4.set_xlabel('Employee Involvement (QKB_1_11)')\n    ax4.set_ylabel('Probability of \"Resiliently Optimistic\"')\n    ax4.set_title('Simple Slopes: Moderation by AI Task Comfort (QGM)')\n    ax4.legend()\n    ax4.grid(True, alpha=0.3)\n    plt.tight_layout()\n    p4_path = os.path.join(data_dir, 'simple_slopes_4_' + str(timestamp) + '.png')\n    plt.savefig(p4_path, dpi=300)\n    plt.close(fig4)\n    print(\"Simple slopes plot saved to \" + p4_path)\n    \n    print(\"Generating odds ratios plot...\")\n    or_df = pd.read_csv(os.path.join(data_dir, 'logistic_regression_results.csv'), index_col=0)\n    or_df = or_df[~or_df.index.isin(['Intercept', 'VC_1'])]\n    or_df = or_df.sort_values('Odds Ratio')\n    \n    or_df.index = [truncate_label(idx) for idx in or_df.index]\n    \n    fig5, ax5 = plt.subplots(figsize=(10, 8))\n    y_pos = np.arange(len(or_df))\n    \n    xerr_lower = or_df['Odds Ratio'] - or_df['OR CI Lower']\n    xerr_upper = or_df['OR CI Upper'] - or_df['Odds Ratio']\n    \n    xerr_lower = np.maximum(0, xerr_lower)\n    xerr_upper = np.maximum(0, xerr_upper)\n    \n    ax5.errorbar(or_df['Odds Ratio'], y_pos, \n                xerr=[xerr_lower, xerr_upper], \n                fmt='o', color='black', ecolor='gray', capsize=3)\n    ax5.axvline(x=1, color='red', linestyle='--')\n    ax5.set_yticks(y_pos)\n    ax5.set_yticklabels(or_df.index)\n    ax5.set_xlabel('Odds Ratio (95% CI)')\n    ax5.set_title('Predictors of \"Resiliently Optimistic\" Class Membership')\n    ax5.grid(True, axis='x', alpha=0.3)\n    plt.tight_layout()\n    p5_path = os.path.join(data_dir, 'odds_ratios_5_' + str(timestamp) + '.png')\n    plt.savefig(p5_path, dpi=300)\n    plt.close(fig5)\n    print(\"Odds ratios plot saved to \" + p5_path)\n```",
+    "timestamp": "2026-04-13 20:04:32",
+    "cost": {
+      "Agent": [
+        "engineer"
+      ],
+      "Model": [
+        "gemini-3.1-pro-preview"
+      ],
+      "Cost": [
+        0.102904
+      ],
+      "Prompt Tokens": [
+        30086
+      ],
+      "Completion Tokens": [
+        3561
+      ],
+      "Total Tokens": [
+        33647
+      ]
+    }
+  },
+  {
+    "name": "engineer_response_evaluator",
+    "content": "**Code Explanation:**\n\nThe provided Python script generates five key visualizations based on the results from the previous steps: 1. LCA Class-Conditional Probabilities Heatmap: Uses the dataset from Step 3 to compute the empirical distribution of responses (from -2 to +2) for current and future job security within each Latent Class. The resulting heatmap visualizes the probability of each response category conditional on class membership. 2. Confusion Matrix: Re-fits the standard logistic regression model from Step 4 on the filtered dataset to predict membership in the \"Resiliently Optimistic\" class versus the \"Anxiously Declining\" class. The predictions are compared against the true labels to generate a confusion matrix heatmap. 3. Predicted Probabilities Contour Plot: Uses the \"Dual-Pillar\" interaction model from Step 5 to predict the probability of being \"Resiliently Optimistic\" across a 2D grid of values for QKB_1_4 (Regular Training) and QKB_1_11 (Employee Involvement), holding all other variables at their means or reference categories. The axes represent the 1-5 Likert scale of importance. 4. Simple Slopes Plot: Visualizes the moderation effect of QGM_Composite (AI Task Comfort) on the relationship between QKB_1_11 (Employee Involvement) and the probability of being \"Resiliently Optimistic\". The plot displays three lines corresponding to Low (-1 SD), Mean, and High (+1 SD) levels of QGM_Composite. 5. Odds Ratios Plot: Loads the logistic regression results from Step 4 and plots the Odds Ratios along with their 95% Confidence Intervals for all predictors (excluding the intercept and variance components). A vertical reference line is added at OR = 1. All plots are saved as high-resolution PNG files in the data/ directory, and their file paths are printed to the console.\n\n**Modifications:**\n\nAdded the main guard, ensured all file paths use the data/ directory, removed LaTeX rendering, and ensured all imports are correct.\n\n**Python Code:**\n\n```python\n# filename: codebase/step_6.py\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport time\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport statsmodels.api as sm\nfrom sklearn.metrics import confusion_matrix\n\ndef truncate_label(label, max_len=40):\n    if len(label) > max_len:\n        return label[:max_len] + '...'\n    return label\n\nif __name__ == '__main__':\n    plt.rcParams['text.usetex'] = False\n    data_dir = 'data'\n    timestamp = int(time.time())\n    print('Generating LCA class-conditional probabilities heatmap...')\n    df3 = pd.read_csv(os.path.join(data_dir, 'processed_data_step3.csv'))\n    fig1, axes1 = plt.subplots(1, 2, figsize=(14, 6), sharey=True)\n    for i, col in enumerate(['Job_Security_Current', 'Job_Security_Future']):\n        prop_df = df3.groupby(['LCA_Class_Name', col]).size().unstack(fill_value=0)\n        prop_df = prop_df.div(prop_df.sum(axis=1), axis=0)\n        sns.heatmap(prop_df, annot=True, fmt='.2f', cmap='YlGnBu', ax=axes1[i], vmin=0, vmax=1)\n        axes1[i].set_title('Item Probabilities: ' + col)\n        axes1[i].set_xlabel('Response Category (-2 to +2)')\n        if i == 0:\n            axes1[i].set_ylabel('LCA Class')\n        else:\n            axes1[i].set_ylabel('')\n    plt.tight_layout()\n    p1_path = os.path.join(data_dir, 'lca_class_conditional_probs_1_' + str(timestamp) + '.png')\n    plt.savefig(p1_path, dpi=300)\n    plt.close(fig1)\n    print('LCA class-conditional probabilities heatmap saved to ' + p1_path)\n    print('Generating confusion matrix plot...')\n    df5 = pd.read_csv(os.path.join(data_dir, 'processed_data_step5.csv'))\n    exog_cols = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11', 'HIDDG', 'QDB', 'QDA']\n    exog_df = pd.get_dummies(df5[exog_cols], columns=['HIDDG', 'QDB', 'QDA'], drop_first=True, dtype=float)\n    exog_df.insert(0, 'Intercept', 1.0)\n    logit_model = sm.Logit(df5['Target'], exog_df)\n    logit_result = logit_model.fit(disp=0)\n    preds_prob = logit_result.predict(exog_df)\n    preds_class = (preds_prob > 0.5).astype(int)\n    cm = confusion_matrix(df5['Target'], preds_class)\n    fig2, ax2 = plt.subplots(figsize=(6, 5))\n    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax2, xticklabels=['Anxiously Declining', 'Resiliently Optimistic'], yticklabels=['Anxiously Declining', 'Resiliently Optimistic'])\n    ax2.set_xlabel('Predicted Class')\n    ax2.set_ylabel('Actual Class')\n    ax2.set_title('Confusion Matrix: Logistic Regression Classifier')\n    plt.tight_layout()\n    p2_path = os.path.join(data_dir, 'confusion_matrix_2_' + str(timestamp) + '.png')\n    plt.savefig(p2_path, dpi=300)\n    plt.close(fig2)\n    print('Confusion matrix plot saved to ' + p2_path)\n    print('Generating predicted probabilities contour plot...')\n    df5['QKB_1_4_x_QKB_1_11'] = df5['QKB_1_4'] * df5['QKB_1_11']\n    exog_cols_dual = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11', 'QKB_1_4_x_QKB_1_11', 'HIDDG', 'QDB']\n    exog_df_dual = pd.get_dummies(df5[exog_cols_dual], columns=['HIDDG', 'QDB'], drop_first=True, dtype=float)\n    exog_df_dual.insert(0, 'Intercept', 1.0)\n    logit_dual = sm.Logit(df5['Target'], exog_df_dual)\n    result_dual = logit_dual.fit(disp=0)\n    qkb_range = np.linspace(1, 5, 50)\n    X_grid, Y_grid = np.meshgrid(qkb_range, qkb_range)\n    grid_df = pd.DataFrame({'QKB_1_4': X_grid.flatten(), 'QKB_1_11': Y_grid.flatten()})\n    grid_df['QKB_1_4_x_QKB_1_11'] = grid_df['QKB_1_4'] * grid_df['QKB_1_11']\n    grid_df['Positive_Affect'] = df5['Positive_Affect'].mean()\n    grid_df['Negative_Affect'] = df5['Negative_Affect'].mean()\n    for col in exog_df_dual.columns:\n        if col not in grid_df.columns:\n            grid_df[col] = 0.0\n    grid_df = grid_df[exog_df_dual.columns]\n    probs = result_dual.predict(grid_df).values.reshape(X_grid.shape)\n    fig3, ax3 = plt.subplots(figsize=(8, 6))\n    contour = ax3.contourf(X_grid, Y_grid, probs, levels=20, cmap='viridis')\n    cbar = plt.colorbar(contour, ax=ax3)\n    cbar.set_label('Probability of \"Resiliently Optimistic\"')\n    ax3.set_xlabel('Regular Training (QKB_1_4)')\n    ax3.set_ylabel('Employee Involvement (QKB_1_11)')\n    ax3.set_title('Predicted Probability of Resiliently Optimistic Class')\n    plt.tight_layout()\n    p3_path = os.path.join(data_dir, 'predicted_probabilities_3_' + str(timestamp) + '.png')\n    plt.savefig(p3_path, dpi=300)\n    plt.close(fig3)\n    print('Predicted probabilities plot saved to ' + p3_path)\n    print('Generating simple slopes plot...')\n    df5['QGM_Centered'] = df5['QGM_Composite'] - df5['QGM_Composite'].mean()\n    df5['QKB_1_11_Centered'] = df5['QKB_1_11'] - df5['QKB_1_11'].mean()\n    df5['QKB_1_11_x_QGM'] = df5['QKB_1_11_Centered'] * df5['QGM_Centered']\n    exog_cols_mod = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11_Centered', 'QGM_Centered', 'QKB_1_11_x_QGM', 'HIDDG', 'QDB']\n    exog_df_mod = pd.get_dummies(df5[exog_cols_mod], columns=['HIDDG', 'QDB'], drop_first=True, dtype=float)\n    exog_df_mod.insert(0, 'Intercept', 1.0)\n    logit_mod = sm.Logit(df5['Target'], exog_df_mod)\n    result_mod = logit_mod.fit(disp=0)\n    qgm_sd = df5['QGM_Composite'].std()\n    qgm_levels = {'Low (-1 SD)': -qgm_sd, 'Mean': 0, 'High (+1 SD)': qgm_sd}\n    qkb_vals = np.linspace(df5['QKB_1_11_Centered'].min(), df5['QKB_1_11_Centered'].max(), 100)\n    fig4, ax4 = plt.subplots(figsize=(8, 6))\n    for label, qgm_val in qgm_levels.items():\n        slopes_df = pd.DataFrame({'QKB_1_11_Centered': qkb_vals})\n        slopes_df['QGM_Centered'] = qgm_val\n        slopes_df['QKB_1_11_x_QGM'] = slopes_df['QKB_1_11_Centered'] * slopes_df['QGM_Centered']\n        slopes_df['Positive_Affect'] = df5['Positive_Affect'].mean()\n        slopes_df['Negative_Affect'] = df5['Negative_Affect'].mean()\n        slopes_df['QKB_1_4'] = df5['QKB_1_4'].mean()\n        for col in exog_df_mod.columns:\n            if col not in slopes_df.columns:\n                slopes_df[col] = 0.0\n        slopes_df = slopes_df[exog_df_mod.columns]\n        log_odds = np.dot(slopes_df, result_mod.params)\n        probs_mod = 1 / (1 + np.exp(-log_odds))\n        ax4.plot(qkb_vals + df5['QKB_1_11'].mean(), probs_mod, label='QGM: ' + label, linewidth=2)\n    ax4.set_xlabel('Employee Involvement (QKB_1_11)')\n    ax4.set_ylabel('Probability of \"Resiliently Optimistic\"')\n    ax4.set_title('Simple Slopes: Moderation by AI Task Comfort (QGM)')\n    ax4.legend()\n    ax4.grid(True, alpha=0.3)\n    plt.tight_layout()\n    p4_path = os.path.join(data_dir, 'simple_slopes_4_' + str(timestamp) + '.png')\n    plt.savefig(p4_path, dpi=300)\n    plt.close(fig4)\n    print('Simple slopes plot saved to ' + p4_path)\n    print('Generating odds ratios plot...')\n    or_df = pd.read_csv(os.path.join(data_dir, 'logistic_regression_results.csv'), index_col=0)\n    or_df = or_df[~or_df.index.isin(['Intercept', 'VC_1'])]\n    or_df = or_df.sort_values('Odds Ratio')\n    or_df.index = [truncate_label(idx) for idx in or_df.index]\n    fig5, ax5 = plt.subplots(figsize=(10, 8))\n    y_pos = np.arange(len(or_df))\n    xerr_lower = or_df['Odds Ratio'] - or_df['OR CI Lower']\n    xerr_upper = or_df['OR CI Upper'] - or_df['Odds Ratio']\n    xerr_lower = np.maximum(0, xerr_lower)\n    xerr_upper = np.maximum(0, xerr_upper)\n    ax5.errorbar(or_df['Odds Ratio'], y_pos, xerr=[xerr_lower, xerr_upper], fmt='o', color='black', ecolor='gray', capsize=3)\n    ax5.axvline(x=1, color='red', linestyle='--')\n    ax5.set_yticks(y_pos)\n    ax5.set_yticklabels(or_df.index)\n    ax5.set_xlabel('Odds Ratio (95% CI)')\n    ax5.set_title('Predictors of \"Resiliently Optimistic\" Class Membership')\n    ax5.grid(True, axis='x', alpha=0.3)\n    plt.tight_layout()\n    p5_path = os.path.join(data_dir, 'odds_ratios_5_' + str(timestamp) + '.png')\n    plt.savefig(p5_path, dpi=300)\n    plt.close(fig5)\n    print('Odds ratios plot saved to ' + p5_path)\n```",
+    "timestamp": "2026-04-13 20:04:47",
+    "cost": {
+      "Agent": [
+        "engineer_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00723375
+      ],
+      "Prompt Tokens": [
+        7755
+      ],
+      "Completion Tokens": [
+        3530
+      ],
+      "Total Tokens": [
+        11285
+      ]
+    }
+  },
+  {
+    "name": "executor",
+    "content": "Execution results:\n\nExecution output: \n/opt/denario-venv/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals\n  warnings.warn(\"Maximum Likelihood optimization failed to \"\nGenerating LCA class-conditional probabilities heatmap...\nLCA class-conditional probabilities heatmap saved to data/lca_class_conditional_probs_1_1776110688.png\nGenerating confusion matrix plot...\nConfusion matrix plot saved to data/confusion_matrix_2_1776110688.png\nGenerating predicted probabilities contour plot...\nPredicted probabilities plot saved to data/predicted_probabilities_3_1776110688.png\nGenerating simple slopes plot...\nSimple slopes plot saved to data/simple_slopes_4_1776110688.png\nGenerating odds ratios plot...\nOdds ratios plot saved to data/odds_ratios_5_1776110688.png\n",
+    "timestamp": "2026-04-13 20:04:49",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "execution_recorder",
+    "content": "Code execution recorded.\n\nExecution output:\nExecution results:\n\nExecution output: \n/opt/denario-venv/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals\n  warnings.warn(\"Maximum Likelihood optimization failed to \"\nGenerating LCA class-conditional probabilities heatmap...\nLCA class-conditional probabilities heatmap saved to data/lca_class_conditional_probs_1_1776110688.png\nGenerating confusion matrix plot...\nConfusion matrix plot saved to data/confusion_matrix_2_1776110688.png\nGenerating predicted probabilities contour plot...\nPredicted probabilities plot saved to data/predicted_probabilities_3_1776110688.png\nGenerating simple slopes plot...\nSimple slopes plot saved to data/simple_slopes_4_1776110688.png\nGenerating odds ratios plot...\nOdds ratios plot saved to data/odds_ratios_5_1776110688.png\n",
+    "timestamp": "2026-04-13 20:04:49",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "executor_response_evaluator",
+    "content": "",
+    "timestamp": "2026-04-13 20:04:50",
+    "cost": {
+      "Agent": [
+        "executor_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.0002895
+      ],
+      "Prompt Tokens": [
+        978
+      ],
+      "Completion Tokens": [
+        30
+      ],
+      "Total Tokens": [
+        1008
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "Code execution successful. 5 new image(s) generated.\n\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nWorkflow status:\n\nPlan step number: 6\n\nAgent for sub-task (might be different from the next agent suggestion for debugging): engineer\n\nStep status (before execution): in progress\n\nCode status: success\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n\nPlease review the generated images and provide feedback.",
+    "timestamp": "2026-04-13 20:04:50",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "image_reviewer",
+    "content": "[{'type': 'text', 'text': '**Needs Revision:** yes\\n\\n**Issues:**\\n- **Image 0 (LCA Heatmaps):** The y-axis labels for the LCA classes are cut off on the left side.\\n- **Image 1 (Confusion Matrix):** The y-axis label \"Actual Class\" is cut off.\\n- **Image 4 (Odds Ratio Plot):** The y-axis labels for the predictors are cut off on the left side.\\n\\n**Suggestions:**\\n- For images 0, 1, and 4, increase the left margin of the plot or use `plt.tight_layout()` to ensure all y-axis labels are fully visible.\\n- For image 4, consider rotating the y-axis labels or using a larger figure size to accommodate the long predictor names.\\n\\n**Summary:**\\nWhile the plots are scientifically accurate and complete, several images have layout issues where y-axis labels are cut off, affecting readability. These need to be fixed.', 'extras': {'signature': 'EjQKMgG+Pvb74V5xTLBxKUTQ0meC7LXLtALU+D8m+1+1btES9nrazn271QeiVz7Z2OacETu/'}}]",
+    "timestamp": "2026-04-13 20:04:55",
+    "cost": {
+      "Agent": [
+        "image_reviewer"
+      ],
+      "Model": [
+        "gemini-3.1-flash-image-preview"
+      ],
+      "Cost": [
+        0.00039187499999999997
+      ],
+      "Prompt Tokens": [
+        4425
+      ],
+      "Completion Tokens": [
+        200
+      ],
+      "Total Tokens": [
+        4625
+      ]
+    }
+  },
+  {
+    "name": "image_review_recorder",
+    "content": "",
+    "timestamp": "2026-04-13 20:04:56",
+    "cost": {
+      "Agent": [
+        "image_review_recorder"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00046725
+      ],
+      "Prompt Tokens": [
+        627
+      ],
+      "Completion Tokens": [
+        207
+      ],
+      "Total Tokens": [
+        834
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "**Image Review Feedback - Revision Needed**\n\n**Summary:** While the plots are scientifically accurate and complete, several images have layout issues where y-axis labels are cut off, affecting readability. These need to be fixed.\n\n**Issues:**\n- Image 0 (LCA Heatmaps): The y-axis labels for the LCA classes are cut off on the left side.\n- Image 1 (Confusion Matrix): The y-axis label \"Actual Class\" is cut off.\n- Image 4 (Odds Ratio Plot): The y-axis labels for the predictors are cut off on the left side.\n\n**Suggestions:**\n- For images 0, 1, and 4, increase the left margin of the plot or use plt.tight_layout() to ensure all y-axis labels are fully visible.\n- For image 4, consider rotating the y-axis labels or using a larger figure size to accommodate the long predictor names.\n\nAttempt 1 of 2. Please fix the plot and regenerate.",
+    "timestamp": "2026-04-13 20:04:56",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "engineer",
+    "content": "**Code Explanation:**\n\nThe provided Python script generates five key visualizations based on the results from the previous steps. To address the layout issues where y-axis labels were cut off, `bbox_inches='tight'` has been added to all `plt.savefig()` calls. This ensures that the bounding box of the saved figure encompasses all elements, including long axis labels. Additionally, the maximum length for truncated labels in the Odds Ratio plot has been reduced to 35 characters, and the figure size for the confusion matrix has been slightly increased to provide more space for the labels.\n\n1. **LCA Class-Conditional Probabilities Heatmap**: Visualizes the probability of each response category conditional on class membership.\n2. **Confusion Matrix**: Generates a confusion matrix heatmap for the logistic regression classifier.\n3. **Predicted Probabilities Contour Plot**: Predicts the probability of being \"Resiliently Optimistic\" across a 2D grid of values for `QKB_1_4` and `QKB_1_11`.\n4. **Simple Slopes Plot**: Visualizes the moderation effect of `QGM_Composite` on the relationship between `QKB_1_11` and the probability of being \"Resiliently Optimistic\".\n5. **Odds Ratios Plot**: Plots the Odds Ratios along with their 95% Confidence Intervals for all predictors.\n\n**Modifications:**\n- Added `bbox_inches='tight'` to all `plt.savefig()` calls to prevent labels from being cut off.\n- Reduced `max_len` in `truncate_label` from 40 to 35.\n- Increased the figure size of the confusion matrix plot slightly.\n\n**Python Code:**\n\n```python\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport time\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport statsmodels.api as sm\nfrom sklearn.metrics import confusion_matrix\n\ndef truncate_label(label, max_len=35):\n    \"\"\"\n    Truncates a string label to a maximum length, appending an ellipsis if truncated.\n    \"\"\"\n    if len(label) > max_len:\n        return label[:max_len] + '...'\n    return label\n\nif __name__ == '__main__':\n    plt.rcParams['text.usetex'] = False\n    data_dir = 'data'\n    timestamp = int(time.time())\n    \n    print('Generating LCA class-conditional probabilities heatmap...')\n    df3 = pd.read_csv(os.path.join(data_dir, 'processed_data_step3.csv'))\n    fig1, axes1 = plt.subplots(1, 2, figsize=(14, 6), sharey=True)\n    for i, col in enumerate(['Job_Security_Current', 'Job_Security_Future']):\n        prop_df = df3.groupby(['LCA_Class_Name', col]).size().unstack(fill_value=0)\n        prop_df = prop_df.div(prop_df.sum(axis=1), axis=0)\n        sns.heatmap(prop_df, annot=True, fmt='.2f', cmap='YlGnBu', ax=axes1[i], vmin=0, vmax=1)\n        axes1[i].set_title('Item Probabilities: ' + col)\n        axes1[i].set_xlabel('Response Category (-2 to +2)')\n        if i == 0:\n            axes1[i].set_ylabel('LCA Class')\n        else:\n            axes1[i].set_ylabel('')\n    plt.tight_layout()\n    p1_path = os.path.join(data_dir, 'lca_class_conditional_probs_1_' + str(timestamp) + '.png')\n    plt.savefig(p1_path, dpi=300, bbox_inches='tight')\n    plt.close(fig1)\n    print('LCA class-conditional probabilities heatmap saved to ' + p1_path)\n    \n    print('Generating confusion matrix plot...')\n    df5 = pd.read_csv(os.path.join(data_dir, 'processed_data_step5.csv'))\n    exog_cols = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11', 'HIDDG', 'QDB', 'QDA']\n    exog_df = pd.get_dummies(df5[exog_cols], columns=['HIDDG', 'QDB', 'QDA'], drop_first=True, dtype=float)\n    exog_df.insert(0, 'Intercept', 1.0)\n    logit_model = sm.Logit(df5['Target'], exog_df)\n    logit_result = logit_model.fit(disp=0)\n    preds_prob = logit_result.predict(exog_df)\n    preds_class = (preds_prob > 0.5).astype(int)\n    cm = confusion_matrix(df5['Target'], preds_class)\n    fig2, ax2 = plt.subplots(figsize=(7, 6))\n    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax2, xticklabels=['Anxiously Declining', 'Resiliently Optimistic'], yticklabels=['Anxiously Declining', 'Resiliently Optimistic'])\n    ax2.set_xlabel('Predicted Class')\n    ax2.set_ylabel('Actual Class')\n    ax2.set_title('Confusion Matrix: Logistic Regression Classifier')\n    plt.tight_layout()\n    p2_path = os.path.join(data_dir, 'confusion_matrix_2_' + str(timestamp) + '.png')\n    plt.savefig(p2_path, dpi=300, bbox_inches='tight')\n    plt.close(fig2)\n    print('Confusion matrix plot saved to ' + p2_path)\n    \n    print('Generating predicted probabilities contour plot...')\n    df5['QKB_1_4_x_QKB_1_11'] = df5['QKB_1_4'] * df5['QKB_1_11']\n    exog_cols_dual = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11', 'QKB_1_4_x_QKB_1_11', 'HIDDG', 'QDB']\n    exog_df_dual = pd.get_dummies(df5[exog_cols_dual], columns=['HIDDG', 'QDB'], drop_first=True, dtype=float)\n    exog_df_dual.insert(0, 'Intercept', 1.0)\n    logit_dual = sm.Logit(df5['Target'], exog_df_dual)\n    result_dual = logit_dual.fit(disp=0)\n    qkb_range = np.linspace(1, 5, 50)\n    X_grid, Y_grid = np.meshgrid(qkb_range, qkb_range)\n    grid_df = pd.DataFrame({'QKB_1_4': X_grid.flatten(), 'QKB_1_11': Y_grid.flatten()})\n    grid_df['QKB_1_4_x_QKB_1_11'] = grid_df['QKB_1_4'] * grid_df['QKB_1_11']\n    grid_df['Positive_Affect'] = df5['Positive_Affect'].mean()\n    grid_df['Negative_Affect'] = df5['Negative_Affect'].mean()\n    for col in exog_df_dual.columns:\n        if col not in grid_df.columns:\n            grid_df[col] = 0.0\n    grid_df = grid_df[exog_df_dual.columns]\n    probs = result_dual.predict(grid_df).values.reshape(X_grid.shape)\n    fig3, ax3 = plt.subplots(figsize=(8, 6))\n    contour = ax3.contourf(X_grid, Y_grid, probs, levels=20, cmap='viridis')\n    cbar = plt.colorbar(contour, ax=ax3)\n    cbar.set_label('Probability of \"Resiliently Optimistic\"')\n    ax3.set_xlabel('Regular Training (QKB_1_4)')\n    ax3.set_ylabel('Employee Involvement (QKB_1_11)')\n    ax3.set_title('Predicted Probability of Resiliently Optimistic Class')\n    plt.tight_layout()\n    p3_path = os.path.join(data_dir, 'predicted_probabilities_3_' + str(timestamp) + '.png')\n    plt.savefig(p3_path, dpi=300, bbox_inches='tight')\n    plt.close(fig3)\n    print('Predicted probabilities plot saved to ' + p3_path)\n    \n    print('Generating simple slopes plot...')\n    df5['QGM_Centered'] = df5['QGM_Composite'] - df5['QGM_Composite'].mean()\n    df5['QKB_1_11_Centered'] = df5['QKB_1_11'] - df5['QKB_1_11'].mean()\n    df5['QKB_1_11_x_QGM'] = df5['QKB_1_11_Centered'] * df5['QGM_Centered']\n    exog_cols_mod = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11_Centered', 'QGM_Centered', 'QKB_1_11_x_QGM', 'HIDDG', 'QDB']\n    exog_df_mod = pd.get_dummies(df5[exog_cols_mod], columns=['HIDDG', 'QDB'], drop_first=True, dtype=float)\n    exog_df_mod.insert(0, 'Intercept', 1.0)\n    logit_mod = sm.Logit(df5['Target'], exog_df_mod)\n    result_mod = logit_mod.fit(disp=0)\n    qgm_sd = df5['QGM_Composite'].std()\n    qgm_levels = {'Low (-1 SD)': -qgm_sd, 'Mean': 0, 'High (+1 SD)': qgm_sd}\n    qkb_vals = np.linspace(df5['QKB_1_11_Centered'].min(), df5['QKB_1_11_Centered'].max(), 100)\n    fig4, ax4 = plt.subplots(figsize=(8, 6))\n    for label, qgm_val in qgm_levels.items():\n        slopes_df = pd.DataFrame({'QKB_1_11_Centered': qkb_vals})\n        slopes_df['QGM_Centered'] = qgm_val\n        slopes_df['QKB_1_11_x_QGM'] = slopes_df['QKB_1_11_Centered'] * slopes_df['QGM_Centered']\n        slopes_df['Positive_Affect'] = df5['Positive_Affect'].mean()\n        slopes_df['Negative_Affect'] = df5['Negative_Affect'].mean()\n        slopes_df['QKB_1_4'] = df5['QKB_1_4'].mean()\n        for col in exog_df_mod.columns:\n            if col not in slopes_df.columns:\n                slopes_df[col] = 0.0\n        slopes_df = slopes_df[exog_df_mod.columns]\n        log_odds = np.dot(slopes_df, result_mod.params)\n        probs_mod = 1 / (1 + np.exp(-log_odds))\n        ax4.plot(qkb_vals + df5['QKB_1_11'].mean(), probs_mod, label='QGM: ' + label, linewidth=2)\n    ax4.set_xlabel('Employee Involvement (QKB_1_11)')\n    ax4.set_ylabel('Probability of \"Resiliently Optimistic\"')\n    ax4.set_title('Simple Slopes: Moderation by AI Task Comfort (QGM)')\n    ax4.legend()\n    ax4.grid(True, alpha=0.3)\n    plt.tight_layout()\n    p4_path = os.path.join(data_dir, 'simple_slopes_4_' + str(timestamp) + '.png')\n    plt.savefig(p4_path, dpi=300, bbox_inches='tight')\n    plt.close(fig4)\n    print('Simple slopes plot saved to ' + p4_path)\n    \n    print('Generating odds ratios plot...')\n    or_df = pd.read_csv(os.path.join(data_dir, 'logistic_regression_results.csv'), index_col=0)\n    or_df = or_df[~or_df.index.isin(['Intercept', 'VC_1'])]\n    or_df = or_df.sort_values('Odds Ratio')\n    or_df.index = [truncate_label(idx) for idx in or_df.index]\n    fig5, ax5 = plt.subplots(figsize=(10, 8))\n    y_pos = np.arange(len(or_df))\n    xerr_lower = or_df['Odds Ratio'] - or_df['OR CI Lower']\n    xerr_upper = or_df['OR CI Upper'] - or_df['Odds Ratio']\n    xerr_lower = np.maximum(0, xerr_lower)\n    xerr_upper = np.maximum(0, xerr_upper)\n    ax5.errorbar(or_df['Odds Ratio'], y_pos, xerr=[xerr_lower, xerr_upper], fmt='o', color='black', ecolor='gray', capsize=3)\n    ax5.axvline(x=1, color='red', linestyle='--')\n    ax5.set_yticks(y_pos)\n    ax5.set_yticklabels(or_df.index)\n    ax5.set_xlabel('Odds Ratio (95% CI)')\n    ax5.set_title('Predictors of \"Resiliently Optimistic\" Class Membership')\n    ax5.grid(True, axis='x', alpha=0.3)\n    plt.tight_layout()\n    p5_path = os.path.join(data_dir, 'odds_ratios_5_' + str(timestamp) + '.png')\n    plt.savefig(p5_path, dpi=300, bbox_inches='tight')\n    plt.close(fig5)\n    print('Odds ratios plot saved to ' + p5_path)\n```",
+    "timestamp": "2026-04-13 20:05:50",
+    "cost": {
+      "Agent": [
+        "engineer",
+        "engineer"
+      ],
+      "Model": [
+        "gemini-3.1-pro-preview",
+        "gemini-3.1-pro-preview"
+      ],
+      "Cost": [
+        0.102904,
+        0.221136
+      ],
+      "Prompt Tokens": [
+        30086,
+        68544
+      ],
+      "Completion Tokens": [
+        3561,
+        7004
+      ],
+      "Total Tokens": [
+        33647,
+        75548
+      ]
+    }
+  },
+  {
+    "name": "engineer_response_evaluator",
+    "content": "**Code Explanation:**\n\nThe provided Python script generates five key visualizations based on the results from the previous steps. To address the layout issues where y-axis labels were cut off, bbox_inches='tight' has been added to all plt.savefig() calls. This ensures that the bounding box of the saved figure encompasses all elements, including long axis labels. Additionally, the maximum length for truncated labels in the Odds Ratio plot has been reduced to 35 characters, and the figure size for the confusion matrix has been slightly increased to provide more space for the labels. 1. LCA Class-Conditional Probabilities Heatmap: Visualizes the probability of each response category conditional on class membership. 2. Confusion Matrix: Generates a confusion matrix heatmap for the logistic regression classifier. 3. Predicted Probabilities Contour Plot: Predicts the probability of being \"Resiliently Optimistic\" across a 2D grid of values for QKB_1_4 and QKB_1_11. 4. Simple Slopes Plot: Visualizes the moderation effect of QGM_Composite on the relationship between QKB_1_11 and the probability of being \"Resiliently Optimistic\". 5. Odds Ratios Plot: Plots the Odds Ratios along with their 95% Confidence Intervals for all predictors.\n\n**Modifications:**\n\nAdded bbox_inches='tight' to all plt.savefig() calls to prevent labels from being cut off. Reduced max_len in truncate_label from 40 to 35. Increased the figure size of the confusion matrix plot slightly.\n\n**Python Code:**\n\n```python\n# filename: codebase/step_6.py\nimport sys\nimport os\nsys.path.insert(0, os.path.abspath(\"codebase\"))\nimport time\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport statsmodels.api as sm\nfrom sklearn.metrics import confusion_matrix\n\ndef truncate_label(label, max_len=35):\n    if len(label) > max_len:\n        return label[:max_len] + '...'\n    return label\n\nif __name__ == '__main__':\n    plt.rcParams['text.usetex'] = False\n    data_dir = 'data'\n    timestamp = int(time.time())\n    print('Generating LCA class-conditional probabilities heatmap...')\n    df3 = pd.read_csv(os.path.join(data_dir, 'processed_data_step3.csv'))\n    fig1, axes1 = plt.subplots(1, 2, figsize=(14, 6), sharey=True)\n    for i, col in enumerate(['Job_Security_Current', 'Job_Security_Future']):\n        prop_df = df3.groupby(['LCA_Class_Name', col]).size().unstack(fill_value=0)\n        prop_df = prop_df.div(prop_df.sum(axis=1), axis=0)\n        sns.heatmap(prop_df, annot=True, fmt='.2f', cmap='YlGnBu', ax=axes1[i], vmin=0, vmax=1)\n        axes1[i].set_title('Item Probabilities: ' + col)\n        axes1[i].set_xlabel('Response Category (-2 to +2)')\n        if i == 0:\n            axes1[i].set_ylabel('LCA Class')\n        else:\n            axes1[i].set_ylabel('')\n    plt.tight_layout()\n    p1_path = os.path.join(data_dir, 'lca_class_conditional_probs_1_' + str(timestamp) + '.png')\n    plt.savefig(p1_path, dpi=300, bbox_inches='tight')\n    plt.close(fig1)\n    print('LCA class-conditional probabilities heatmap saved to ' + p1_path)\n    print('Generating confusion matrix plot...')\n    df5 = pd.read_csv(os.path.join(data_dir, 'processed_data_step5.csv'))\n    exog_cols = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11', 'HIDDG', 'QDB', 'QDA']\n    exog_df = pd.get_dummies(df5[exog_cols], columns=['HIDDG', 'QDB', 'QDA'], drop_first=True, dtype=float)\n    exog_df.insert(0, 'Intercept', 1.0)\n    logit_model = sm.Logit(df5['Target'], exog_df)\n    logit_result = logit_model.fit(disp=0)\n    preds_prob = logit_result.predict(exog_df)\n    preds_class = (preds_prob > 0.5).astype(int)\n    cm = confusion_matrix(df5['Target'], preds_class)\n    fig2, ax2 = plt.subplots(figsize=(7, 6))\n    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax2, xticklabels=['Anxiously Declining', 'Resiliently Optimistic'], yticklabels=['Anxiously Declining', 'Resiliently Optimistic'])\n    ax2.set_xlabel('Predicted Class')\n    ax2.set_ylabel('Actual Class')\n    ax2.set_title('Confusion Matrix: Logistic Regression Classifier')\n    plt.tight_layout()\n    p2_path = os.path.join(data_dir, 'confusion_matrix_2_' + str(timestamp) + '.png')\n    plt.savefig(p2_path, dpi=300, bbox_inches='tight')\n    plt.close(fig2)\n    print('Confusion matrix plot saved to ' + p2_path)\n    print('Generating predicted probabilities contour plot...')\n    df5['QKB_1_4_x_QKB_1_11'] = df5['QKB_1_4'] * df5['QKB_1_11']\n    exog_cols_dual = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11', 'QKB_1_4_x_QKB_1_11', 'HIDDG', 'QDB']\n    exog_df_dual = pd.get_dummies(df5[exog_cols_dual], columns=['HIDDG', 'QDB'], drop_first=True, dtype=float)\n    exog_df_dual.insert(0, 'Intercept', 1.0)\n    logit_dual = sm.Logit(df5['Target'], exog_df_dual)\n    result_dual = logit_dual.fit(disp=0)\n    qkb_range = np.linspace(1, 5, 50)\n    X_grid, Y_grid = np.meshgrid(qkb_range, qkb_range)\n    grid_df = pd.DataFrame({'QKB_1_4': X_grid.flatten(), 'QKB_1_11': Y_grid.flatten()})\n    grid_df['QKB_1_4_x_QKB_1_11'] = grid_df['QKB_1_4'] * grid_df['QKB_1_11']\n    grid_df['Positive_Affect'] = df5['Positive_Affect'].mean()\n    grid_df['Negative_Affect'] = df5['Negative_Affect'].mean()\n    for col in exog_df_dual.columns:\n        if col not in grid_df.columns:\n            grid_df[col] = 0.0\n    grid_df = grid_df[exog_df_dual.columns]\n    probs = result_dual.predict(grid_df).values.reshape(X_grid.shape)\n    fig3, ax3 = plt.subplots(figsize=(8, 6))\n    contour = ax3.contourf(X_grid, Y_grid, probs, levels=20, cmap='viridis')\n    cbar = plt.colorbar(contour, ax=ax3)\n    cbar.set_label('Probability of \"Resiliently Optimistic\"')\n    ax3.set_xlabel('Regular Training (QKB_1_4)')\n    ax3.set_ylabel('Employee Involvement (QKB_1_11)')\n    ax3.set_title('Predicted Probability of Resiliently Optimistic Class')\n    plt.tight_layout()\n    p3_path = os.path.join(data_dir, 'predicted_probabilities_3_' + str(timestamp) + '.png')\n    plt.savefig(p3_path, dpi=300, bbox_inches='tight')\n    plt.close(fig3)\n    print('Predicted probabilities plot saved to ' + p3_path)\n    print('Generating simple slopes plot...')\n    df5['QGM_Centered'] = df5['QGM_Composite'] - df5['QGM_Composite'].mean()\n    df5['QKB_1_11_Centered'] = df5['QKB_1_11'] - df5['QKB_1_11'].mean()\n    df5['QKB_1_11_x_QGM'] = df5['QKB_1_11_Centered'] * df5['QGM_Centered']\n    exog_cols_mod = ['Positive_Affect', 'Negative_Affect', 'QKB_1_4', 'QKB_1_11_Centered', 'QGM_Centered', 'QKB_1_11_x_QGM', 'HIDDG', 'QDB']\n    exog_df_mod = pd.get_dummies(df5[exog_cols_mod], columns=['HIDDG', 'QDB'], drop_first=True, dtype=float)\n    exog_df_mod.insert(0, 'Intercept', 1.0)\n    logit_mod = sm.Logit(df5['Target'], exog_df_mod)\n    result_mod = logit_mod.fit(disp=0)\n    qgm_sd = df5['QGM_Composite'].std()\n    qgm_levels = {'Low (-1 SD)': -qgm_sd, 'Mean': 0, 'High (+1 SD)': qgm_sd}\n    qkb_vals = np.linspace(df5['QKB_1_11_Centered'].min(), df5['QKB_1_11_Centered'].max(), 100)\n    fig4, ax4 = plt.subplots(figsize=(8, 6))\n    for label, qgm_val in qgm_levels.items():\n        slopes_df = pd.DataFrame({'QKB_1_11_Centered': qkb_vals})\n        slopes_df['QGM_Centered'] = qgm_val\n        slopes_df['QKB_1_11_x_QGM'] = slopes_df['QKB_1_11_Centered'] * slopes_df['QGM_Centered']\n        slopes_df['Positive_Affect'] = df5['Positive_Affect'].mean()\n        slopes_df['Negative_Affect'] = df5['Negative_Affect'].mean()\n        slopes_df['QKB_1_4'] = df5['QKB_1_4'].mean()\n        for col in exog_df_mod.columns:\n            if col not in slopes_df.columns:\n                slopes_df[col] = 0.0\n        slopes_df = slopes_df[exog_df_mod.columns]\n        log_odds = np.dot(slopes_df, result_mod.params)\n        probs_mod = 1 / (1 + np.exp(-log_odds))\n        ax4.plot(qkb_vals + df5['QKB_1_11'].mean(), probs_mod, label='QGM: ' + label, linewidth=2)\n    ax4.set_xlabel('Employee Involvement (QKB_1_11)')\n    ax4.set_ylabel('Probability of \"Resiliently Optimistic\"')\n    ax4.set_title('Simple Slopes: Moderation by AI Task Comfort (QGM)')\n    ax4.legend()\n    ax4.grid(True, alpha=0.3)\n    plt.tight_layout()\n    p4_path = os.path.join(data_dir, 'simple_slopes_4_' + str(timestamp) + '.png')\n    plt.savefig(p4_path, dpi=300, bbox_inches='tight')\n    plt.close(fig4)\n    print('Simple slopes plot saved to ' + p4_path)\n    print('Generating odds ratios plot...')\n    or_df = pd.read_csv(os.path.join(data_dir, 'logistic_regression_results.csv'), index_col=0)\n    or_df = or_df[~or_df.index.isin(['Intercept', 'VC_1'])]\n    or_df = or_df.sort_values('Odds Ratio')\n    or_df.index = [truncate_label(idx) for idx in or_df.index]\n    fig5, ax5 = plt.subplots(figsize=(10, 8))\n    y_pos = np.arange(len(or_df))\n    xerr_lower = or_df['Odds Ratio'] - or_df['OR CI Lower']\n    xerr_upper = or_df['OR CI Upper'] - or_df['Odds Ratio']\n    xerr_lower = np.maximum(0, xerr_lower)\n    xerr_upper = np.maximum(0, xerr_upper)\n    ax5.errorbar(or_df['Odds Ratio'], y_pos, xerr=[xerr_lower, xerr_upper], fmt='o', color='black', ecolor='gray', capsize=3)\n    ax5.axvline(x=1, color='red', linestyle='--')\n    ax5.set_yticks(y_pos)\n    ax5.set_yticklabels(or_df.index)\n    ax5.set_xlabel('Odds Ratio (95% CI)')\n    ax5.set_title('Predictors of \"Resiliently Optimistic\" Class Membership')\n    ax5.grid(True, axis='x', alpha=0.3)\n    plt.tight_layout()\n    p5_path = os.path.join(data_dir, 'odds_ratios_5_' + str(timestamp) + '.png')\n    plt.savefig(p5_path, dpi=300, bbox_inches='tight')\n    plt.close(fig5)\n    print('Odds ratios plot saved to ' + p5_path)\n```",
+    "timestamp": "2026-04-13 20:06:04",
+    "cost": {
+      "Agent": [
+        "engineer_response_evaluator",
+        "engineer_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00723375,
+        0.01646375
+      ],
+      "Prompt Tokens": [
+        7755,
+        23765
+      ],
+      "Completion Tokens": [
+        3530,
+        7015
+      ],
+      "Total Tokens": [
+        11285,
+        30780
+      ]
+    }
+  },
+  {
+    "name": "executor",
+    "content": "Execution results:\n\nExecution output: \n/opt/denario-venv/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals\n  warnings.warn(\"Maximum Likelihood optimization failed to \"\nGenerating LCA class-conditional probabilities heatmap...\nLCA class-conditional probabilities heatmap saved to data/lca_class_conditional_probs_1_1776110765.png\nGenerating confusion matrix plot...\nConfusion matrix plot saved to data/confusion_matrix_2_1776110765.png\nGenerating predicted probabilities contour plot...\nPredicted probabilities plot saved to data/predicted_probabilities_3_1776110765.png\nGenerating simple slopes plot...\nSimple slopes plot saved to data/simple_slopes_4_1776110765.png\nGenerating odds ratios plot...\nOdds ratios plot saved to data/odds_ratios_5_1776110765.png\n",
+    "timestamp": "2026-04-13 20:06:06",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "execution_recorder",
+    "content": "Code execution recorded.\n\nExecution output:\nExecution results:\n\nExecution output: \n/opt/denario-venv/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals\n  warnings.warn(\"Maximum Likelihood optimization failed to \"\nGenerating LCA class-conditional probabilities heatmap...\nLCA class-conditional probabilities heatmap saved to data/lca_class_conditional_probs_1_1776110765.png\nGenerating confusion matrix plot...\nConfusion matrix plot saved to data/confusion_matrix_2_1776110765.png\nGenerating predicted probabilities contour plot...\nPredicted probabilities plot saved to data/predicted_probabilities_3_1776110765.png\nGenerating simple slopes plot...\nSimple slopes plot saved to data/simple_slopes_4_1776110765.png\nGenerating odds ratios plot...\nOdds ratios plot saved to data/odds_ratios_5_1776110765.png\n",
+    "timestamp": "2026-04-13 20:06:06",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "executor_response_evaluator",
+    "content": "",
+    "timestamp": "2026-04-13 20:06:07",
+    "cost": {
+      "Agent": [
+        "executor_response_evaluator",
+        "executor_response_evaluator"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.0002895,
+        0.000579
+      ],
+      "Prompt Tokens": [
+        978,
+        1956
+      ],
+      "Completion Tokens": [
+        30,
+        60
+      ],
+      "Total Tokens": [
+        1008,
+        2016
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "Code execution successful. 5 new image(s) generated.\n\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nWorkflow status:\n\nPlan step number: 6\n\nAgent for sub-task (might be different from the next agent suggestion for debugging): engineer\n\nStep status (before execution): in progress\n\nCode status: success\n\nxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n\nPlease review the generated images and provide feedback.",
+    "timestamp": "2026-04-13 20:06:07",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "image_reviewer",
+    "content": "[{'type': 'text', 'text': '**Needs Revision:** no\\n\\n**Issues:**\\nNone\\n\\n**Suggestions:**\\nNone\\n\\n**Summary:**\\nAll five generated plots are of high quality, scientifically accurate, and fully address the requirements of the visualization task. The labels are clear, the data is represented appropriately, and the plots provide valuable insights into the LCA and logistic regression results.', 'extras': {'signature': 'EjQKMgG+Pvb75u0cq3gYn9GWTCHNA6QB+hzjtoUyrein9g9dUZhAam0LZCU0XimymYm61xr2'}}]",
+    "timestamp": "2026-04-13 20:06:12",
+    "cost": {
+      "Agent": [
+        "image_reviewer",
+        "image_reviewer"
+      ],
+      "Model": [
+        "gemini-3.1-flash-image-preview",
+        "gemini-3.1-flash-image-preview"
+      ],
+      "Cost": [
+        0.00039187499999999997,
+        0.000352575
+      ],
+      "Prompt Tokens": [
+        4425,
+        4425
+      ],
+      "Completion Tokens": [
+        200,
+        69
+      ],
+      "Total Tokens": [
+        4625,
+        4494
+      ]
+    }
+  },
+  {
+    "name": "image_review_recorder",
+    "content": "",
+    "timestamp": "2026-04-13 20:06:13",
+    "cost": {
+      "Agent": [
+        "image_review_recorder",
+        "image_review_recorder"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.00046725,
+        0.00070475
+      ],
+      "Prompt Tokens": [
+        627,
+        1121
+      ],
+      "Completion Tokens": [
+        207,
+        283
+      ],
+      "Total Tokens": [
+        834,
+        1404
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "Image review passed. Step marked as complete.\n\nSummary: All five generated plots are of high quality, scientifically accurate, and fully address the requirements of the visualization task. The labels are clear, the data is represented appropriately, and the plots provide valuable insights into the LCA and logistic regression results.",
+    "timestamp": "2026-04-13 20:06:13",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "controller",
+    "content": "",
+    "timestamp": "2026-04-13 20:06:14",
+    "cost": {
+      "Agent": [
+        "controller"
+      ],
+      "Model": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "Cost": [
+        0.0062404999999999995
+      ],
+      "Prompt Tokens": [
+        24854
+      ],
+      "Completion Tokens": [
+        18
+      ],
+      "Total Tokens": [
+        24872
+      ]
+    }
+  },
+  {
+    "name": "_Group_Tool_Executor",
+    "content": "\n**Step number:** 6 out of 7.\n\n**Sub-task:** Visualization of Results\n\n**Agent in charge of sub-task:** `engineer`\n\n**Instructions:**\n\n- Generate a heatmap/bar chart of LCA class-conditional item probabilities.\n- Create a confusion matrix for the logistic regression classifier.\n- Plot predicted probabilities of class membership across training/involvement levels.\n- Create a simple slopes plot for the Informed Skeptic moderation and an odds ratio plot with 95% CIs.\n- Save all plots as high-resolution PNG files.\n\n**Step status:** completed \u2705\n\n**Code status:** success\n\n**Step iteration:** 0/10\n        ",
+    "timestamp": "2026-04-13 20:06:14",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  },
+  {
+    "name": "terminator",
+    "content": "TERMINATE",
+    "timestamp": "2026-04-13 20:06:14",
+    "cost": {
+      "Agent": [],
+      "Model": [],
+      "Cost": [],
+      "Prompt Tokens": [],
+      "Completion Tokens": [],
+      "Total Tokens": []
+    }
+  }
+]

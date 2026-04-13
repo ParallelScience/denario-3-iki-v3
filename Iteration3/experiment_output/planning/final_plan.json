@@ -1,0 +1,78 @@
+{
+    "sub_tasks": [
+        {
+            "bullet_points": [
+                "Load the raw dataset and handle missing values ('.').",
+                "Identify and print exact column names for QHD, QGM, QKB_1, QKB_2, and QGO blocks.",
+                "Encode binary variables (QHD, QGM, QF, QED_1, QKC, QGH) to 0/1.",
+                "Map ordinal Likert scales (QEA, QEB, QGP, QGU, QKB_1, QGO) to numeric values.",
+                "Create composite indices for Job Security (current/future) and Nature of Work Change (current/future).",
+                "Build a unified QGM composite score (sum of 17 binary comfort items).",
+                "Create binary 'Usage State' (QA_1_1: Non-user=1, Active=0) and encode QGN (ordinal) and QKD (dummy).",
+                "Generate a country-specific ordinal income rank from QDF columns.",
+                "Save the cleaned, processed dataframe to a file."
+            ],
+            "sub_task": "Data Preprocessing and Feature Engineering",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Perform EFA on 16 binary QHD items using a tetrachoric correlation matrix.",
+                "Extract \"Positive Affect\" and \"Negative Affect\" factors; print factor loadings and variance explained.",
+                "Calculate and validate factor scores using McDonald’s omega.",
+                "Z-standardize factor scores and append them to the processed dataset file."
+            ],
+            "sub_task": "Affective Disposition Modeling",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Fit LCA models for 2, 3, and 4 classes using current/future job security indices.",
+                "Select the best solution based on BIC, AIC, and Entropy; print descriptive statistics (mean job security per class).",
+                "Print the full class-conditional response probability table for the selected solution.",
+                "Assign class membership to each respondent and save the updated dataset."
+            ],
+            "sub_task": "Latent Class Analysis (LCA) Estimation",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Filter dataset for \"Resiliently Optimistic\" and \"Anxiously Declining\" classes.",
+                "Perform binary logistic regression (1=Resilient, 0=Anxious) using Affective Disposition, HIDDG, QDB, and QDA (random intercept).",
+                "Include QKB_1_4 (Regular Training) and QKB_1_11 (Employee Involvement) as predictors.",
+                "Report FDR-corrected p-values and odds ratios."
+            ],
+            "sub_task": "Main-Effects Logistic Regression",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Test the \"Dual-Pillar\" hypothesis by adding an interaction term (QKB_1_4 * QKB_1_11) to the logistic model.",
+                "Perform moderation analysis for \"Informed Skeptic\" segments by interacting QKB_1_11 with the QGM composite score.",
+                "Print Johnson-Neyman interval boundaries and simple slopes at low, mean, and high QGM values."
+            ],
+            "sub_task": "Interaction and Moderation Analysis",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Generate a heatmap/bar chart of LCA class-conditional item probabilities.",
+                "Create a confusion matrix for the logistic regression classifier.",
+                "Plot predicted probabilities of class membership across training/involvement levels.",
+                "Create a simple slopes plot for the Informed Skeptic moderation and an odds ratio plot with 95% CIs.",
+                "Save all plots as high-resolution PNG files."
+            ],
+            "sub_task": "Visualization of Results",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Structure the Results section with subsections: (1) Sample and Class Descriptives, (2) Affective Disposition Factor Structure, (3) LCA Model Selection and Class Profiles, (4) Main-Effects Logistic Regression, (5) Dual-Pillar Interaction Test, (6) Informed Skeptic Moderation, and (7) Sensitivity Checks.",
+                "Synthesize quantitative findings, interpret the \"Dual-Pillar\" effect, and discuss the role of Affective Disposition.",
+                "Ensure complete coverage of all statistical outputs and visualizations generated in previous steps."
+            ],
+            "sub_task": "Final Results Synthesis and Reporting",
+            "sub_task_agent": "researcher"
+        }
+    ]
+}
