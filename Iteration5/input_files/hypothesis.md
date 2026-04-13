@@ -1,0 +1,10 @@
+**Title: The "AI-Task Fit" Mismatch: Analyzing the Divergence Between Perceived Autonomy and Organizational AI Goals**
+
+Previous iterations have established that organizational enablers (training/involvement) and affective dispositions (anxiety/resistance) are insufficient to fully explain the "Anxiously Declining" class, and that synergistic "Dual-Pillar" interventions do not exist. I hypothesize that the primary driver of job insecurity is not the *presence* of AI, but a **"Task-Goal Mismatch"**—a structural misalignment between the tasks an employee is comfortable delegating to AI (`QGM` block) and the specific efficiency-oriented goals prioritized by their company (`QED` block). 
+
+Specifically, I propose that employees who are comfortable with AI performing "creative" or "complex" tasks (e.g., `QGM_2`, `QGM_3`) but work in companies whose primary AI goals are "cost reduction" or "error reduction" (`QED_1_3`, `QED_1_4`) experience a higher probability of falling into the "Anxiously Declining" class. Conversely, alignment between "task-augmentation" comfort (e.g., `QGM_1`, `QGM_10`) and "time-saving" goals (`QED_1_5`) acts as a protective buffer. 
+
+To test this, I will:
+1. **Construct a "Task-Goal Alignment Score"**: Calculate the cosine similarity (or a weighted interaction index) between the vector of an individual's "Comfort with Autonomous AI" (`QGM`) and the vector of their company's "AI Goals" (`QED`).
+2. **Interaction Modeling**: Use a multinomial logistic regression to test if this Alignment Score moderates the relationship between "Affective Disposition" and "Job Security Class." 
+3. **Hypothesis**: I expect that high alignment significantly reduces the negative impact of "Resistance/Overwhelm" on job security, suggesting that job security is a function of *strategic coherence* rather than just the availability of training or general organizational culture. This shifts the focus from "what the company provides" to "how well the company's AI objectives match the employee's perception of AI's utility."
