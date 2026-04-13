@@ -1,0 +1,9 @@
+**Title: The "Agency-Autonomy" Mismatch: Investigating the Divergence between AI-Task Comfort and Perceived Job Security**
+
+Previous iterations have established that organizational enablers (training/involvement) and affective dispositions are primary drivers of job security, yet they often fail to explain the "Anxiously Declining" class or the "Stagnant Neutral" segment effectively. My hypothesis is that job security is not merely a function of organizational support, but a **"Capability-Autonomy Mismatch"**: employees who are comfortable with *autonomous* AI tasks (QGM block) but lack *personal agency* in their own workflow (QEA/QEB personal agency items) experience a "de-skilling anxiety" that overrides organizational training efforts. 
+
+I propose a two-stage analytical approach:
+1. **Interaction Analysis:** Test the interaction between "Autonomous AI Comfort" (QGM) and "Personal Agency" (QEA_14) as a predictor of the "Anxiously Declining" latent class. I hypothesize that high comfort with autonomous AI coupled with low personal agency creates a "Replacement Threat" profile that is immune to standard training interventions.
+2. **Task-Composition Mapping:** Instead of treating "Nature of Work" as a global index, I will perform a **Cluster Analysis on the Task-Transformation Delta** (QGP vs QGU). By identifying which specific task clusters (e.g., "Creative" vs. "Repetitive") are shifting, I will determine if the "Anxiously Declining" class is concentrated in roles where AI is replacing *human judgment* (high-value work) rather than *human labor* (repetitive work). 
+
+This approach shifts the focus from "what the company provides" (enablers) to "how the employee experiences the shift in their own cognitive contribution," potentially explaining why previous models showed that training/involvement sometimes paradoxically increased anxiety (the "Awareness-Uncertainty Paradox").
