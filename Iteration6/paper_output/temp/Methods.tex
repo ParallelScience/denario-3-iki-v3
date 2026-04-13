@@ -1,0 +1,36 @@
+\documentclass[]{article}
+
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{natbib}
+\usepackage{graphicx} 
+
+
+\begin{document}
+
+\subsection{Sample and data}
+The analysis is based on survey data collected from a sample of 2,603 employees working in large global enterprises. The survey captured a wide range of variables, including demographic information, perceptions of AI's impact on job security, affective responses to AI, and detailed assessments of organizational policies and culture. Key variables included Likert-scale items measuring current and expected job security, binary items on emotional attitudes, and questions regarding specific organizational enablers and deterrents related to AI adoption.
+
+\subsection{Latent class analysis}
+To identify unobserved heterogeneity in employee responses to AI, we employed a person-centered approach using Latent Class Analysis (LCA). The LCA was performed on the joint distribution of two indicator variables: current perceived impact of AI on job security and the expected impact in three years. This method allows for the empirical identification of distinct subgroups, or latent classes, of employees who share similar response patterns, representing different psychological trajectories.
+
+The optimal number of classes was determined by fitting models with two to six classes and comparing their statistical fit indices. We primarily relied on the Bayesian Information Criterion (BIC), where a lower value indicates a better model fit, and the normalized entropy, which measures the certainty of classification. A three-class solution was selected as it provided the lowest BIC value and high class separation, indicating a robust and interpretable typology of employee trajectories.
+
+\subsection{Analytical strategy}
+Our analytical strategy proceeded in three main stages following the identification of the latent classes.
+
+\subsubsection{Dimensionality reduction of affective dispositions}
+To model employees' underlying emotional attitudes towards AI without introducing multicollinearity from the 16 binary survey items, we first conducted an Exploratory Factor Analysis (EFA). Given the binary nature of the items, the EFA was based on a tetrachoric correlation matrix. A Varimax rotation was applied to the extracted factors to improve interpretability. This process yielded two distinct and internally consistent latent factors, labeled "Positive Affect" and "Negative Affect". The internal consistency of these factors was assessed using McDonald's Omega ($\Omega$). The resulting factor scores were retained as continuous covariates for subsequent regression models.
+
+\subsubsection{Predictor selection and regression modeling}
+To identify the most salient organizational factors predicting class membership, we first used an Elastic Net logistic regression. This regularization method performs automated feature selection, making it well-suited for identifying a parsimonious set of predictors from a larger pool of correlated variables, such as the various organizational policies surveyed.
+
+The predictors identified by the Elastic Net, along with the affective disposition factor scores and key deterrents, were then included in a comprehensive Multinomial Logistic Regression (MNLogit) model. The dependent variable for this model was the three-level latent class membership. The "Anxiously Declining" class was set as the reference category to facilitate the interpretation of model coefficients. This allowed us to directly estimate how specific organizational enablers and deterrents affect the odds of an employee belonging to the "Resiliently Optimistic" or "Stagnant Neutral" class compared to the most vulnerable group. Results are reported as Odds Ratios (OR) with corresponding 95\% confidence intervals.
+
+\subsubsection{Policy simulation and robustness checks}
+To translate the regression results into practical insights, we conducted a Monte Carlo policy simulation based on the estimated coefficients from the multinomial model. This simulation calculated the predicted probability of an average employee belonging to the "Resiliently Optimistic" class under different combinations of key organizational policies, specifically contrasting the effects of providing training with direct employee involvement in AI development.
+
+Finally, to ensure the stability of our findings, we performed several robustness checks. We assessed multicollinearity among the predictors in our final model by calculating Variance Inflation Factors (VIF). Furthermore, we conducted a sensitivity analysis by re-estimating the multinomial logistic regression on modified versions of the sample: one excluding respondents who answered "Not sure" to the job security questions, and another where "Not sure" responses were imputed with the modal value. The stability of the key predictors' odds ratios across these model specifications was used to confirm the robustness of our conclusions.
+
+\end{document}
+                

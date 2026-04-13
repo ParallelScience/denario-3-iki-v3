@@ -1,0 +1,21 @@
+LaTeX Compilation Errors Found:
+
+! Missing $ inserted.
+<inserted text>
+$
+l.107 ...dds ratio for employee involvement (`QKB_
+2_11`) was highly consiste...
+
+? ! Double subscript.
+l.107 ...s ratio for employee involvement (`QKB_2_
+11`) was highly consistent...
+
+?
+
+! Emergency stop.
+l.107
+
+Output written on Results_refined.pdf (5 pages).
+Transcript written on Results_refined.log.
+---- STDERR ----
+

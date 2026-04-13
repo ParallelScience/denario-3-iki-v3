@@ -1,0 +1,39 @@
+/opt/denario-venv/lib/python3.12/site-packages/denario/langgraph_agents/paper_module/LaTeX/AAS_keywords.txt
+Found 5 plot files to process....
+Plot files: ['step_2_lca_bic_entropy_1776114673.png', 'step_3_qhd_factor_loadings_1776114809.png', 'step_4_elastic_net_coefficients_1776115025.png']...
+Extracting UNESCO keywords.......
+  Level 1 domains: ['PSYCHOLOGY', 'ECONOMIC SCIENCES', 'SOCIOLOGY', 'MATHEMATICS']
+  Level 2 sub-fields for PSYCHOLOGY: ['Occupational and personnel psychology', 'Evaluation and measurement in psychology', 'Personality', 'Social psychology']
+  Level 3 areas for Occupational and personnel psychology: ['Attitudes and morale', 'Job design and evaluation', 'Labour/management relations', 'Organizational behaviour', 'Personnel selection', 'Performance evaluation']
+  Level 3 areas for Evaluation and measurement in psychology: ['Psychometrics', 'Scale analysis', 'Test validation', 'Statistics', 'Experimental design', 'Measurement theory']
+  Level 3 areas for Personality: ['Creativity', 'Culture and personality', 'Personality development', 'Personality measurement', 'Structure and dynamics of personality', 'Theory of personality']
+  Level 3 areas for Social psychology: ['Attitudes', 'Decision processes and theory', 'Group interaction', 'Group processes', 'Leadership', 'Rôle behaviour']
+  Level 2 sub-fields for ECONOMIC SCIENCES: ['Economics of technological change', 'Industrial organization and public policy', 'Organization and management of enterprises', 'Sectorial economics']
+  Level 3 areas for Economics of technological change: ['Technological innovation', 'Technological innovation', 'Technological innovation', 'Technological innovation', 'Technological innovation', 'Technological innovation']
+  Level 3 areas for Industrial organization and public policy: ['Government regulation of the private sector', 'Market structure', 'Monopoly and competition', 'Public enterprises', 'Public utilities', 'Other (specify)']
+  Level 3 areas for Organization and management of enterprises: ['Manpower management', 'Industry studies', 'Operations research', 'Organization of production', 'Optimum production levels', 'Other (specify)']
+  Level 3 areas for Sectorial economics: ['Community', 'social and personal services', 'Education', 'Finance and insurance', 'Manufacturing', 'Research and development', 'Trade and commerce']
+  Level 2 sub-fields for SOCIOLOGY: ['Occupational sociology', 'Social change and development', 'Social groups', 'Mathematical sociology']
+  Level 3 areas for Occupational sociology: ['Industrial sociology', 'Sociology of science', 'Other (specify)', 'Other (specify)', 'Other (specify)', 'Other (specify)']
+  Level 3 areas for Social change and development: ['Evolution of societies', 'Social policy', 'Social security', 'Social services', 'Socio-economic development', 'Technology and social change']
+  Level 3 areas for Social groups: ['Social classes', 'Social mobility', 'Social stratification', 'Elites', "Woman's status", 'Other (specify)']
+  Level 3 areas for Mathematical sociology: ['Measurement and index construction', 'Model building', 'Statistical analysis', 'Other (specify)', 'Other (specify)', 'Other (specify)']
+  Level 2 sub-fields for MATHEMATICS: ['Computer Sciences', 'Operations research', 'Probability', 'Statistics']
+  Level 3 areas for Computer Sciences: ['Artificial intelligence', 'Causal modelling', 'Computer-assisted instruction', 'Information systems; design and components', 'Programming theory', 'Simulation']
+  Level 3 areas for Operations research: ['Control systems', 'Cybernetics', 'Dynamic programming', 'Non-linear programming', 'Systems formulation', 'Systems reliability']
+  Level 3 areas for Probability: ['Application of probability', 'Subjective probabilities', 'Stochastic processes', 'Markov processes', 'Analytic probability theory', 'Foundations of probability']
+  Level 3 areas for Statistics: ['Analytical statistics', 'Data analysis', 'Decision procedures and theory', 'Multivariate analysis', 'Techniques of statistical association', 'Techniques of statistical inference']
+  Final UNESCO keywords: Artificial intelligence, Organizational behaviour, Occupational and personnel psychology, Attitudes and morale, Manpower management, Statistical analysis, Multivariate analysis, Social change and development
+........UNESCO keywords generated
+✅✅.................Abstract written
+✅✅✅✅✅...............Captions generated
+✅................Figures generated
+✅.............Introduction written
+✅..................Methods written
+✅..................Results written
+✅..............Conclusions written
+Compiling paper_v1_preliminary...✅✅
+❌✅..........Refined results written
+Compiling paper_v2_no_citations..✅✅
+Paper written in 7 min 7 sec.
+Cost: $0.641
