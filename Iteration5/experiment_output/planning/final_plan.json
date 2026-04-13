@@ -1,0 +1,72 @@
+{
+    "sub_tasks": [
+        {
+            "bullet_points": [
+                "Load the dataset, treating '.' as NaN.",
+                "Recode binary variables (QHD, QGM, QF, QED_1, QKC, QGH) to 0/1.",
+                "Map ordinal Likert scales (QEA, QEB, QGP, QGU, QKB_1, QGO) to numeric integers (-2 to +2), explicitly mapping \"Not sure\" to NaN.",
+                "Document and print missingness rates for all variables.",
+                "Construct country-specific ordinal income ranks by identifying the populated QDF_* column per respondent and ranking within each country.",
+                "Construct composite indices: Job Security (current/future) and Nature of Work Change (past/future).",
+                "Save the cleaned, harmonized dataset to disk."
+            ],
+            "sub_task": "Data Cleaning, Harmonization, and Index Construction",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Perform EFA on the 16 binary QHD items using a tetrachoric correlation matrix; determine factor retention via parallel analysis/scree plot and save the scree plot.",
+                "Compute the gap between QKB_1 (importance) and QKB_2 (actual practice) for the 11 enabler items and print these gaps.",
+                "Perform PCA on the gap scores to create an \"Organizational Support Index.\"",
+                "Calculate McDonald’s omega for factor consistency.",
+                "Save the resulting factor scores and indices."
+            ],
+            "sub_task": "Affective Disposition Dimensionality Reduction and Organizational Support Indexing",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Perform Ordinal Logistic Regression to predict job security outcomes.",
+                "Include the Organizational Support Index, Affective Disposition scores, and the QKB_1_4 × QKB_1_11 interaction term.",
+                "Include a quadratic term for the Task Transformation Index to test for U-shaped relationships.",
+                "Include agentic AI (QKD) as a moderator.",
+                "Compute VIF for all predictors (flag > 5) and report standardized beta coefficients, 95% CIs, and FDR-adjusted p-values.",
+                "Perform sensitivity analysis by comparing models with and without the \"Not sure\" (uninformed) segment."
+            ],
+            "sub_task": "Regression Modeling and Sensitivity Analysis",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Train a Random Forest regressor to identify top 20 feature importances via permutation importance.",
+                "Conduct mediation analysis (SEM) testing the indirect path: Organizational Support Index → Task Transformation Indices → Job Security, using 1000+ bootstrap samples.",
+                "Save all statistical outputs and model performance metrics."
+            ],
+            "sub_task": "Random Forest, Mediation, and Subgroup Analysis",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Generate a heatmap of Spearman rank correlations between top predictors and outcomes.",
+                "Create a forest plot of standardized regression coefficients.",
+                "Plot Random Forest permutation importance scores.",
+                "Visualize mediation paths with standardized effect sizes.",
+                "Generate a grouped bar chart comparing mean Job Security Index scores across generations, job profiles, and countries with 95% CIs.",
+                "Save all plots as high-resolution PNG files."
+            ],
+            "sub_task": "Visualization of Key Findings",
+            "sub_task_agent": "engineer"
+        },
+        {
+            "bullet_points": [
+                "Interpret statistical results, focusing on the interaction between employee involvement and regular training.",
+                "Frame results around the trajectory classes (Resiliently Optimistic, Anxiously Declining, Stagnant Neutral).",
+                "Include a dedicated subsection on sensitivity analyses (treatment of \"Not sure\" responses).",
+                "Report all key numerical results, effect sizes, and confidence intervals.",
+                "Synthesize findings into a comprehensive Results section for the research paper."
+            ],
+            "sub_task": "Results Synthesis and Reporting",
+            "sub_task_agent": "researcher"
+        }
+    ]
+}

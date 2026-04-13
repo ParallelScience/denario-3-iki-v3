@@ -1,0 +1,1 @@
+python3 -c "import pandas as pd; df = pd.read_csv('data/cleaned_dataset_step2.csv'); print(df.columns.tolist())"
