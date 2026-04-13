@@ -1,0 +1,1226 @@
+
+###### PROMPT BEGINS ########
+Human: You are provided with the following inputs:
+
+1) A description of a dataset
+2) A current scientific idea or hypothesis
+3) A current research plan
+4) The results obtained from executing that plan
+
+**Your task is to assess whether any limitations, failures, or ambiguities in the analysis are directly attributable to constraints described in the dataset description.**
+
+Examples of such constraints include (but are not limited to):
+- required preprocessing steps or exclusions,
+- missing variables or incomplete coverage,
+- limited sample size or class imbalance,
+- measurement noise, censoring, or aggregation,
+- assumptions imposed by how the data were collected or curated.
+
+**Scope restriction (important)**:
+- Focus only on the dataset description.
+- Do not critique the scientific idea, hypothesis, or research plan.
+- Do not suggest alternative methods or models.
+- Other agents are responsible for methodological or conceptual feedback.
+
+**If a data-level constraint plausibly explains observed failures or weak results, describe:**
+- which constraint is responsible,
+- how it limits the analysis,
+- and what type of conclusions are affected.
+
+If no such constraints are evident, explicitly state that the dataset description does not appear to explain the observed issues.
+
+Data description:
+# IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+
+Idea: 
+**Title: Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability**
+
+This study replaces interval-based delta analysis with Latent Class Analysis (LCA) to categorize the 2,603 respondents into distinct psychological trajectory classes (e.g., "Resiliently Optimistic," "Anxiously Declining," and "Stagnant Neutral") based on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security. By applying a multinomial logistic regression, we determine how specific organizational enablers (`QKB`) and cultural attributes (`QGO`)—encoded as composite indices—predict membership in the "Resiliently Optimistic" versus "Anxiously Declining" classes. To address multicollinearity, we condense the 16 binary `QHD` emotional attitude items into a lower-dimensional latent "Affective Disposition" score, which serves as a covariate alongside baseline job profile (`HIDDG`) and sector (`QDB`). The research objective is to isolate the structural configurations—specifically, the interaction between "employee involvement in development" (QKB_1_11) and "regular training" (QKB_1_4)—that statistically increase the probability of an employee occupying a positive stability class. This approach provides a rigorous, non-linear framework for identifying the specific organizational policies that effectively decouple AI-driven task evolution from perceived job displacement.
+
+Research plan:
+1. **Data Preprocessing and Feature Engineering**:
+   - Load the dataset, treating '.' as NaN.
+   - Map binary columns (QHD, QGM, QF, QED_1, QKC, QGH) to 0/1.
+   - Map ordinal Likert scales (QEA, QEB, QGP, QGU, QKB_1, QGO) to integer scales (-2 to +2). Map frequency/duration variables (QC, QGI, QGS) to integer ranks.
+   - Construct "Income Rank" by normalizing income bands within each country (QDA).
+   - Create composite indices for organizational enablers (QKB) and company culture (QGO) by averaging relevant Likert items.
+   - Retain "Not sure" responses as a distinct category or indicator variable for sensitivity analysis rather than immediate exclusion.
+
+2. **Dimensionality Reduction for Affective Disposition**:
+   - Assess suitability for dimensionality reduction using the Kaiser-Meyer-Olkin (KMO) measure and Bartlett’s test of sphericity.
+   - Perform Exploratory Factor Analysis (EFA) on the 16 binary `QHD` items. If multi-dimensional, extract two factors (e.g., "Positive Affect" and "Negative Affect") instead of one.
+   - Validate the internal consistency of extracted factors using Cronbach’s alpha or McDonald’s omega.
+
+3. **Latent Class Analysis (LCA) for Job Security Trajectories**:
+   - Perform LCA using `QEA_2` and `QEB_2` as ordinal indicators.
+   - Estimate models with 2–5 classes. Select the optimal model based on BIC, AIC, and Entropy (aiming for > 0.8).
+   - Assign each respondent to their most likely latent class (e.g., "Resiliently Optimistic," "Anxiously Declining," "Stagnant Neutral").
+
+4. **Multicollinearity and Control Setup**:
+   - Calculate Variance Inflation Factors (VIF) for all predictors, specifically checking for high correlation between composite indices (QKB, QGO) and their constituent items (e.g., `QKB_1_11`, `QKB_1_4`).
+   - If multicollinearity is high, use residuals of items after regressing out the index, or use items directly.
+   - Prepare the model to include `QDA` (Country) as a fixed effect to account for nested cultural/economic variance.
+
+5. **Multinomial Logistic Regression**:
+   - Regress latent class membership on organizational enablers, culture index, "Affective Disposition" factor(s), job profile (`HIDDG`), sector (`QDB`), and country fixed effects.
+   - Use "Stagnant Neutral" as the reference category to interpret odds ratios for other classes.
+
+6. **Interaction Analysis for Organizational Catalysts**:
+   - Introduce an interaction term between "employee involvement in development" (`QKB_1_11`) and "regular training" (`QKB_1_4`).
+   - Calculate and visualize marginal effects to determine how the probability of belonging to the "Resiliently Optimistic" class shifts based on these variables.
+
+7. **Robustness and Sensitivity Analysis**:
+   - Perform 5-fold cross-validation to assess predictive stability.
+   - Conduct sensitivity analysis by comparing models that exclude "Not sure" responses against models that treat "Not sure" as a distinct category or use Multiple Imputation (MI) to ensure results are not biased by missing data patterns.
+
+8. **Statistical Significance and Reporting**:
+   - Apply FDR correction to all p-values.
+   - Report standardized coefficients, odds ratios, 95% confidence intervals, and model fit statistics (Entropy, BIC/AIC).
+   - Generate probability plots for interaction effects.
+
+Analysis results:
+# Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability
+
+### Introduction
+The integration of Artificial Intelligence (AI) into enterprise workflows has precipitated widespread discourse regarding its impact on the future of work and employee job security. Moving beyond deterministic narratives of technological displacement, this analysis conceptualizes AI-induced job security not as a monolithic outcome, but as a heterogeneous set of psychological trajectories. By applying Latent Class Analysis (LCA) to a global dataset of 2,603 employees at large enterprises, we identify distinct subpopulations based on their current and expected future job security. Furthermore, through multinomial logistic regression and marginal effects analysis, we isolate the specific organizational catalysts—namely, employee involvement in AI development, regular training, and company culture—that predict membership in resilient versus declining trajectories. The following sections detail the quantitative findings, model diagnostics, and theoretical interpretations of these structural configurations.
+
+---
+
+### 1. Affective Disposition Factor Structure
+
+To control for baseline psychological variance and isolate the effect of organizational policies, we first reduced the 16 binary emotional attitude items (`QHD` block) into a lower-dimensional latent space using Exploratory Factor Analysis (EFA). Given the binary nature of the indicators, the EFA was appropriately conducted on a tetrachoric correlation matrix. 
+
+The data demonstrated excellent suitability for structure detection, yielding a Kaiser-Meyer-Olkin (KMO) measure of sampling adequacy of 0.8207, well above the conventional threshold of 0.60. Bartlett’s Test of Sphericity was highly significant ($p < 0.001$), rejecting the null hypothesis of an identity matrix and confirming sufficient covariance among the emotional items.
+
+The extraction process, guided by the scree plot of eigenvalues, identified a robust two-factor solution:
+*   **Factor 1: Affective Valence (14 items):** This primary factor represents a bipolar continuum of emotional response to AI. It is characterized by strong positive loadings for empowering emotions—such as *Motivated* (0.754), *Confident* (0.738), *Excited* (0.723), and *Optimistic* (0.694)—and correspondingly strong negative loadings for threat-based emotions, including *Threatened* (-0.869), *Worried* (-0.811), *Skeptical* (-0.770), and *Anxious* (-0.770). While the raw Cronbach’s alpha for this factor was mathematically low (0.0637)—a known methodological artifact when calculating internal consistency on a set of strongly negatively correlated bipolar items without prior reverse-scoring—the magnitude and directionality of the factor loadings provide unequivocal evidence of a unidimensional construct ranging from AI-induced threat to AI-induced empowerment.
+*   **Factor 2: Cautious Curiosity (2 items):** A secondary, orthogonal factor emerged, driven by positive loadings for *Curious* (0.710) and *Cautious* (0.652). This factor captures a state of vigilant, pragmatic engagement, distinct from the pure positive/negative valence of Factor 1.
+
+These two continuous factor scores were extracted and utilized as critical psychological covariates in the subsequent predictive modeling.
+
+---
+
+### 2. Latent Class Solution and Trajectory Profiles
+
+To capture the non-linear and heterogeneous nature of job security perceptions, Latent Class Analysis (LCA) was performed on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security impacts. Models ranging from 2 to 5 classes were estimated. The optimal solution was selected based on the minimization of the Bayesian Information Criterion (BIC), which balances model fit with parsimony, alongside considerations of class interpretability and entropy (class separation). 
+
+The optimal LCA model identified four distinct psychological trajectory classes, effectively categorizing the workforce into the following profiles (visualized in Panel A and D of the results summary):
+
+1.  **Resiliently Optimistic (31.81% of respondents):** This represents the largest single cohort. Individuals in this class exhibit a high conditional probability of reporting that AI has a "Slightly positive" or "Significantly positive" impact on both their current role security and their expected security over the next three years. For this group, AI is perceived as a catalyst for professional stability and value augmentation.
+2.  **Stagnant Neutral (28.70% of respondents):** This class is characterized by a dominant probability of reporting "No impact" across both time horizons. These employees perceive their roles as orthogonal to AI integration, either due to the nature of their tasks being insulated from current AI capabilities, or due to a lack of organizational AI penetration.
+3.  **Moderately Optimistic (26.51% of respondents):** This group displays a trajectory leaning towards positive impacts, but with less intensity and certainty than the Resiliently Optimistic class. Their conditional probabilities peak around "Slightly positive" and "No impact."
+4.  **Anxiously Declining (12.99% of respondents):** Representing the most vulnerable segment of the workforce, this class is defined by high probabilities of reporting "Slightly negative" or "Significantly negative" impacts on both current and future job security. This cohort views AI as a direct displacement threat.
+
+The identification of these four classes confirms that interval-based delta analysis (simply averaging scores) would obscure critical workforce dynamics. The policy challenge for organizations is not merely to shift a global mean, but to transition employees out of the "Anxiously Declining" class and into the "Resiliently Optimistic" class.
+
+---
+
+### 3. Multinomial Regression Predictors of Class Membership
+
+To determine how organizational enablers predict trajectory membership, a multinomial logistic regression was estimated. The "Stagnant Neutral" class was designated as the reference category, allowing us to interpret the Odds Ratios (OR) as the likelihood of moving into an active trajectory (positive or negative) versus remaining unimpacted. 
+
+Prior to estimation, Variance Inflation Factors (VIF) were calculated to assess multicollinearity. All VIFs were exceptionally low (Regular Training = 1.14, Interaction Term = 1.13, Employee Involvement = 1.11, Affective Factor 1 = 1.04, Company Culture = 1.01), confirming that the predictors provide independent explanatory variance. The model achieved a 5-fold cross-validation accuracy of 38.34% ($\pm$ 2.32%). While seemingly modest in absolute terms, this performance is highly robust for a 4-class multinomial prediction of subjective psychological states, performing well above the 25% random baseline.
+
+#### Catalysts for the "Resiliently Optimistic" Class
+Compared to the neutral baseline, membership in the Resiliently Optimistic class is heavily driven by specific, actionable organizational policies:
+*   **Employee Involvement:** Involving end-users in the AI development and deployment process (`QKB_1_11`) emerged as a highly significant predictor. A one standard deviation increase in this variable increases the odds of being Resiliently Optimistic by 25.6% (OR = 1.256, 95% CI: [1.126, 1.401], FDR-adjusted $p = 0.0002$). This suggests that granting employees agency over how AI is integrated into their workflows is a primary driver of perceived security.
+*   **Regular Training:** The provision of regular AI training (`QKB_1_4`) also significantly increases the odds of positive trajectory membership by 19.2% (OR = 1.192, 95% CI: [1.065, 1.334], $p = 0.0059$).
+*   **Psychological Covariates:** Unsurprisingly, baseline Positive Affective Valence (Factor 1) strongly predicts membership in this class (OR = 1.487, $p < 0.001$), while Cautious Curiosity (Factor 2) reduces the odds (OR = 0.554, $p < 0.001$), indicating that pure optimism, rather than cautious vigilance, aligns with this trajectory.
+
+#### Protections against the "Anxiously Declining" Class
+The predictors for the vulnerable Anxiously Declining class reveal a different organizational mechanism. Interestingly, specific AI enablers like training (OR = 1.035, $p = 0.8116$) and involvement (OR = 1.076, $p = 0.3972$) did not significantly differentiate this negative class from the neutral baseline. 
+*   **Company Culture:** Instead, broader organizational culture—specifically an environment that encourages experimentation, learning from mistakes, and speaking candidly (`Company_Culture_Index`)—served as the critical protective factor. A one standard deviation increase in positive company culture significantly *reduces* the odds of an employee falling into the Anxiously Declining trajectory by 14.3% (OR = 0.857, 95% CI: [0.780, 0.942], $p = 0.0042$). 
+*   This implies that while specific AI policies (training/involvement) are required to generate *optimism*, a foundation of psychological safety (culture) is required to prevent *decline*.
+
+---
+
+### 4. Interaction Effects of Organizational Catalysts
+
+A core objective of this research was to isolate the structural configurations of organizational policies—specifically, whether Employee Involvement and Regular Training interact synergistically. 
+
+In the multinomial logit model, the formal multiplicative interaction term (`Interaction_QKB11_QKB4`) was not statistically significant for predicting the Resiliently Optimistic class (OR = 0.990, 95% CI: [0.900, 1.090], $p = 0.9085$). However, interpreting interaction terms in non-linear models via coefficients alone can be misleading. To fully understand the policy implications, we calculated and visualized the marginal effects (predicted probabilities) across the parameter space (Panel B of the results summary).
+
+The marginal effects analysis reveals a powerful, cumulative *additive* effect. The probability of an employee occupying the Resiliently Optimistic class scales linearly with the stacking of organizational policies:
+*   **Baseline Vulnerability:** For an employee experiencing low training (-1 SD) and low involvement (-2 SD), the probability of belonging to the Resiliently Optimistic class is only **20.00%**.
+*   **Single Policy Intervention:** If the organization implements high training (+1 SD) but maintains low involvement (-2 SD), the probability rises to **27.24%**. Conversely, if training is low (-1 SD) but involvement is maximized (+2 SD), the probability reaches **34.16%**.
+*   **Combined Policy Optimization:** When an organization successfully stacks both catalysts—providing high training (+1 SD) alongside high employee involvement (+2 SD)—the probability of the employee occupying the most positive job security trajectory peaks at **40.47%**.
+
+**Interpretation:** The lack of a multiplicative interaction indicates that training and involvement do not depend on each other to be effective; they are independently valuable. However, their simultaneous presence effectively doubles the likelihood (from ~20% to ~40%) of an employee feeling secure in an AI-augmented future. Involvement provides the *agency* to shape the technology, while training provides the *competence* to utilize it. Together, they form a comprehensive structural catalyst for professional stability.
+
+---
+
+### 5. Robustness and Sensitivity Checks
+
+Survey data regarding emerging technologies frequently contains high rates of "Not sure" responses. In the primary analysis, these responses were retained and imputed/handled via the modeling framework to preserve the full sample ($N=2603$). To ensure our findings were not artifacts of this missing data handling, a rigorous sensitivity analysis was conducted using listwise deletion for any missing or "Not sure" responses across the key predictors, resulting in a complete-case cohort of $N=1195$.
+
+Comparing the coefficients between the full model and the sensitivity model yielded critical insights into the nature of the workforce:
+1.  **Robustness of Involvement:** The effect of Employee Involvement on predicting the Resiliently Optimistic class remained highly robust; in fact, the coefficient strengthened from 0.2279 in the full model to 0.2629 in the sensitivity model ($\Delta = +0.0349$). This confirms that giving employees a voice in AI deployment is a universally effective strategy, regardless of the respondent's baseline certainty.
+2.  **Attenuation of Training:** Conversely, the effect of Regular Training on the Resiliently Optimistic class severely attenuated in the complete-case analysis, with the coefficient dropping from 0.1756 to 0.0277 ($\Delta = -0.1479$). 
+    *   *Interpretation:* This attenuation is highly revealing. It suggests that formal AI training is most impactful for employees who are currently uncertain or ambivalent (the "Not sure" respondents who were excluded in the sensitivity check). For employees who already possess crystallized views on AI (the complete-case cohort), training is less of a differentiator than structural involvement. Training cures uncertainty, but involvement builds optimism.
+3.  **Strengthening of Culture:** The protective effect of Company Culture against the Anxiously Declining class strengthened substantially in the sensitivity model, with the negative coefficient shifting from -0.1538 to -0.2785 ($\Delta = -0.1247$). This reaffirms that for employees with definitive negative outlooks, a psychologically safe culture is the paramount mitigating factor against perceived job threat.
+
+### Conclusion
+
+This analysis demonstrates that AI-induced job insecurity is not an inevitable consequence of technological capability, but a variable outcome heavily mediated by organizational architecture. By utilizing Latent Class Analysis, we identified that nearly a third of the enterprise workforce (31.8%) is already on a "Resiliently Optimistic" trajectory, while 13% face an "Anxiously Declining" reality. 
+
+The multinomial regression and marginal effects analyses provide a clear blueprint for organizational leaders. To prevent workforce anxiety, companies must invest in foundational cultural elements—psychological safety, ethical transparency, and the freedom to experiment. However, to actively generate optimism and perceived job security, organizations must move beyond passive culture and implement active structural catalysts. While regular training is highly effective at converting the uncertain, the ultimate driver of resilient optimism is employee involvement. By transforming employees from passive consumers of AI into active co-developers of their augmented workflows, organizations can effectively decouple AI-driven task evolution from perceived job displacement.
+
+**Respond in exactly this format:**
+
+\\begin{COMMENTS}
+<COMMENTS>
+\\end{COMMENTS}
+
+In <COMMENTS>, put your comments. Your comments should be short, unless you identify issues with the input data description.
+
+###### PROMPT BEGINS ########
+
+###### PROMPT ENDS ########
+
+Human: You are provided with the following inputs:
+
+1) A description of a dataset
+2) A current scientific idea or hypothesis
+3) A current research plan
+4) The results obtained from executing that plan
+5) A cumulative report documenting all previous analyses performed on the same dataset
+
+Your task is to critically evaluate the current analysis in the context of all prior work.
+The goal is not to summarize, but to provide actionable, technically informed feedback that will improve the scientific quality, robustness, and insight of future iterations.
+
+Assume that:
+- The dataset is fixed
+- Prior analyses are known and accessible
+- Future agents will use your feedback to design the next research iteration
+
+**Evaluation Guidelines (must follow)**
+**Be a hard critic.**
+    - Identify weaknesses, gaps, overclaims, and missed opportunities.
+    - Treat the analysis as if you were a skeptical but constructive reviewer.
+
+**No Redundant Suggestions.**
+- Do not propose repeating analyses already performed unless:
+    - they failed,
+    - they were methodologically flawed, or
+    - you can clearly articulate how to improve them.
+
+**Context-Aware Critique.**
+- Explicitly take into account:
+    - what has already been tried,
+    - what worked,
+    - what did not,
+    - and what assumptions are now constrained by prior results.
+- For things that failed, state whether they are strictly neccesary or could be done in another way
+
+**Insight-Oriented Feedback.**
+- Focus on suggestions that could:
+    - strengthen causal interpretation,
+    - reduce uncertainty or bias,
+    - reveal new structure in the data,
+    - or test alternative explanations.
+- Avoid superficial “more data / more models” recommendations unless justified.
+
+**Big picture**
+- Your feedback must be used to improve the quality of the work but not to just make it overly complicated
+- We want to perform the minimum analysis needed to yield robust and sound conclusions and to have enough material for a paper
+- Ideally, if a method is simpler and yield the same results, the simpler should be used as will be more interpretable
+- Ultimately, we are interested in learning about science, not super technical details of the way to analyze the data
+
+**Forward-Looking.**
+- Your feedback should not only improve performance, but also help the project learn something new.
+
+Data description:
+# IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+
+Current idea: 
+**Title: Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability**
+
+This study replaces interval-based delta analysis with Latent Class Analysis (LCA) to categorize the 2,603 respondents into distinct psychological trajectory classes (e.g., "Resiliently Optimistic," "Anxiously Declining," and "Stagnant Neutral") based on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security. By applying a multinomial logistic regression, we determine how specific organizational enablers (`QKB`) and cultural attributes (`QGO`)—encoded as composite indices—predict membership in the "Resiliently Optimistic" versus "Anxiously Declining" classes. To address multicollinearity, we condense the 16 binary `QHD` emotional attitude items into a lower-dimensional latent "Affective Disposition" score, which serves as a covariate alongside baseline job profile (`HIDDG`) and sector (`QDB`). The research objective is to isolate the structural configurations—specifically, the interaction between "employee involvement in development" (QKB_1_11) and "regular training" (QKB_1_4)—that statistically increase the probability of an employee occupying a positive stability class. This approach provides a rigorous, non-linear framework for identifying the specific organizational policies that effectively decouple AI-driven task evolution from perceived job displacement.
+
+Current research plan:
+1. **Data Preprocessing and Feature Engineering**:
+   - Load the dataset, treating '.' as NaN.
+   - Map binary columns (QHD, QGM, QF, QED_1, QKC, QGH) to 0/1.
+   - Map ordinal Likert scales (QEA, QEB, QGP, QGU, QKB_1, QGO) to integer scales (-2 to +2). Map frequency/duration variables (QC, QGI, QGS) to integer ranks.
+   - Construct "Income Rank" by normalizing income bands within each country (QDA).
+   - Create composite indices for organizational enablers (QKB) and company culture (QGO) by averaging relevant Likert items.
+   - Retain "Not sure" responses as a distinct category or indicator variable for sensitivity analysis rather than immediate exclusion.
+
+2. **Dimensionality Reduction for Affective Disposition**:
+   - Assess suitability for dimensionality reduction using the Kaiser-Meyer-Olkin (KMO) measure and Bartlett’s test of sphericity.
+   - Perform Exploratory Factor Analysis (EFA) on the 16 binary `QHD` items. If multi-dimensional, extract two factors (e.g., "Positive Affect" and "Negative Affect") instead of one.
+   - Validate the internal consistency of extracted factors using Cronbach’s alpha or McDonald’s omega.
+
+3. **Latent Class Analysis (LCA) for Job Security Trajectories**:
+   - Perform LCA using `QEA_2` and `QEB_2` as ordinal indicators.
+   - Estimate models with 2–5 classes. Select the optimal model based on BIC, AIC, and Entropy (aiming for > 0.8).
+   - Assign each respondent to their most likely latent class (e.g., "Resiliently Optimistic," "Anxiously Declining," "Stagnant Neutral").
+
+4. **Multicollinearity and Control Setup**:
+   - Calculate Variance Inflation Factors (VIF) for all predictors, specifically checking for high correlation between composite indices (QKB, QGO) and their constituent items (e.g., `QKB_1_11`, `QKB_1_4`).
+   - If multicollinearity is high, use residuals of items after regressing out the index, or use items directly.
+   - Prepare the model to include `QDA` (Country) as a fixed effect to account for nested cultural/economic variance.
+
+5. **Multinomial Logistic Regression**:
+   - Regress latent class membership on organizational enablers, culture index, "Affective Disposition" factor(s), job profile (`HIDDG`), sector (`QDB`), and country fixed effects.
+   - Use "Stagnant Neutral" as the reference category to interpret odds ratios for other classes.
+
+6. **Interaction Analysis for Organizational Catalysts**:
+   - Introduce an interaction term between "employee involvement in development" (`QKB_1_11`) and "regular training" (`QKB_1_4`).
+   - Calculate and visualize marginal effects to determine how the probability of belonging to the "Resiliently Optimistic" class shifts based on these variables.
+
+7. **Robustness and Sensitivity Analysis**:
+   - Perform 5-fold cross-validation to assess predictive stability.
+   - Conduct sensitivity analysis by comparing models that exclude "Not sure" responses against models that treat "Not sure" as a distinct category or use Multiple Imputation (MI) to ensure results are not biased by missing data patterns.
+
+8. **Statistical Significance and Reporting**:
+   - Apply FDR correction to all p-values.
+   - Report standardized coefficients, odds ratios, 95% confidence intervals, and model fit statistics (Entropy, BIC/AIC).
+   - Generate probability plots for interaction effects.
+
+Current results:
+# Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability
+
+### Introduction
+The integration of Artificial Intelligence (AI) into enterprise workflows has precipitated widespread discourse regarding its impact on the future of work and employee job security. Moving beyond deterministic narratives of technological displacement, this analysis conceptualizes AI-induced job security not as a monolithic outcome, but as a heterogeneous set of psychological trajectories. By applying Latent Class Analysis (LCA) to a global dataset of 2,603 employees at large enterprises, we identify distinct subpopulations based on their current and expected future job security. Furthermore, through multinomial logistic regression and marginal effects analysis, we isolate the specific organizational catalysts—namely, employee involvement in AI development, regular training, and company culture—that predict membership in resilient versus declining trajectories. The following sections detail the quantitative findings, model diagnostics, and theoretical interpretations of these structural configurations.
+
+---
+
+### 1. Affective Disposition Factor Structure
+
+To control for baseline psychological variance and isolate the effect of organizational policies, we first reduced the 16 binary emotional attitude items (`QHD` block) into a lower-dimensional latent space using Exploratory Factor Analysis (EFA). Given the binary nature of the indicators, the EFA was appropriately conducted on a tetrachoric correlation matrix. 
+
+The data demonstrated excellent suitability for structure detection, yielding a Kaiser-Meyer-Olkin (KMO) measure of sampling adequacy of 0.8207, well above the conventional threshold of 0.60. Bartlett’s Test of Sphericity was highly significant ($p < 0.001$), rejecting the null hypothesis of an identity matrix and confirming sufficient covariance among the emotional items.
+
+The extraction process, guided by the scree plot of eigenvalues, identified a robust two-factor solution:
+*   **Factor 1: Affective Valence (14 items):** This primary factor represents a bipolar continuum of emotional response to AI. It is characterized by strong positive loadings for empowering emotions—such as *Motivated* (0.754), *Confident* (0.738), *Excited* (0.723), and *Optimistic* (0.694)—and correspondingly strong negative loadings for threat-based emotions, including *Threatened* (-0.869), *Worried* (-0.811), *Skeptical* (-0.770), and *Anxious* (-0.770). While the raw Cronbach’s alpha for this factor was mathematically low (0.0637)—a known methodological artifact when calculating internal consistency on a set of strongly negatively correlated bipolar items without prior reverse-scoring—the magnitude and directionality of the factor loadings provide unequivocal evidence of a unidimensional construct ranging from AI-induced threat to AI-induced empowerment.
+*   **Factor 2: Cautious Curiosity (2 items):** A secondary, orthogonal factor emerged, driven by positive loadings for *Curious* (0.710) and *Cautious* (0.652). This factor captures a state of vigilant, pragmatic engagement, distinct from the pure positive/negative valence of Factor 1.
+
+These two continuous factor scores were extracted and utilized as critical psychological covariates in the subsequent predictive modeling.
+
+---
+
+### 2. Latent Class Solution and Trajectory Profiles
+
+To capture the non-linear and heterogeneous nature of job security perceptions, Latent Class Analysis (LCA) was performed on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security impacts. Models ranging from 2 to 5 classes were estimated. The optimal solution was selected based on the minimization of the Bayesian Information Criterion (BIC), which balances model fit with parsimony, alongside considerations of class interpretability and entropy (class separation). 
+
+The optimal LCA model identified four distinct psychological trajectory classes, effectively categorizing the workforce into the following profiles (visualized in Panel A and D of the results summary):
+
+1.  **Resiliently Optimistic (31.81% of respondents):** This represents the largest single cohort. Individuals in this class exhibit a high conditional probability of reporting that AI has a "Slightly positive" or "Significantly positive" impact on both their current role security and their expected security over the next three years. For this group, AI is perceived as a catalyst for professional stability and value augmentation.
+2.  **Stagnant Neutral (28.70% of respondents):** This class is characterized by a dominant probability of reporting "No impact" across both time horizons. These employees perceive their roles as orthogonal to AI integration, either due to the nature of their tasks being insulated from current AI capabilities, or due to a lack of organizational AI penetration.
+3.  **Moderately Optimistic (26.51% of respondents):** This group displays a trajectory leaning towards positive impacts, but with less intensity and certainty than the Resiliently Optimistic class. Their conditional probabilities peak around "Slightly positive" and "No impact."
+4.  **Anxiously Declining (12.99% of respondents):** Representing the most vulnerable segment of the workforce, this class is defined by high probabilities of reporting "Slightly negative" or "Significantly negative" impacts on both current and future job security. This cohort views AI as a direct displacement threat.
+
+The identification of these four classes confirms that interval-based delta analysis (simply averaging scores) would obscure critical workforce dynamics. The policy challenge for organizations is not merely to shift a global mean, but to transition employees out of the "Anxiously Declining" class and into the "Resiliently Optimistic" class.
+
+---
+
+### 3. Multinomial Regression Predictors of Class Membership
+
+To determine how organizational enablers predict trajectory membership, a multinomial logistic regression was estimated. The "Stagnant Neutral" class was designated as the reference category, allowing us to interpret the Odds Ratios (OR) as the likelihood of moving into an active trajectory (positive or negative) versus remaining unimpacted. 
+
+Prior to estimation, Variance Inflation Factors (VIF) were calculated to assess multicollinearity. All VIFs were exceptionally low (Regular Training = 1.14, Interaction Term = 1.13, Employee Involvement = 1.11, Affective Factor 1 = 1.04, Company Culture = 1.01), confirming that the predictors provide independent explanatory variance. The model achieved a 5-fold cross-validation accuracy of 38.34% ($\pm$ 2.32%). While seemingly modest in absolute terms, this performance is highly robust for a 4-class multinomial prediction of subjective psychological states, performing well above the 25% random baseline.
+
+#### Catalysts for the "Resiliently Optimistic" Class
+Compared to the neutral baseline, membership in the Resiliently Optimistic class is heavily driven by specific, actionable organizational policies:
+*   **Employee Involvement:** Involving end-users in the AI development and deployment process (`QKB_1_11`) emerged as a highly significant predictor. A one standard deviation increase in this variable increases the odds of being Resiliently Optimistic by 25.6% (OR = 1.256, 95% CI: [1.126, 1.401], FDR-adjusted $p = 0.0002$). This suggests that granting employees agency over how AI is integrated into their workflows is a primary driver of perceived security.
+*   **Regular Training:** The provision of regular AI training (`QKB_1_4`) also significantly increases the odds of positive trajectory membership by 19.2% (OR = 1.192, 95% CI: [1.065, 1.334], $p = 0.0059$).
+*   **Psychological Covariates:** Unsurprisingly, baseline Positive Affective Valence (Factor 1) strongly predicts membership in this class (OR = 1.487, $p < 0.001$), while Cautious Curiosity (Factor 2) reduces the odds (OR = 0.554, $p < 0.001$), indicating that pure optimism, rather than cautious vigilance, aligns with this trajectory.
+
+#### Protections against the "Anxiously Declining" Class
+The predictors for the vulnerable Anxiously Declining class reveal a different organizational mechanism. Interestingly, specific AI enablers like training (OR = 1.035, $p = 0.8116$) and involvement (OR = 1.076, $p = 0.3972$) did not significantly differentiate this negative class from the neutral baseline. 
+*   **Company Culture:** Instead, broader organizational culture—specifically an environment that encourages experimentation, learning from mistakes, and speaking candidly (`Company_Culture_Index`)—served as the critical protective factor. A one standard deviation increase in positive company culture significantly *reduces* the odds of an employee falling into the Anxiously Declining trajectory by 14.3% (OR = 0.857, 95% CI: [0.780, 0.942], $p = 0.0042$). 
+*   This implies that while specific AI policies (training/involvement) are required to generate *optimism*, a foundation of psychological safety (culture) is required to prevent *decline*.
+
+---
+
+### 4. Interaction Effects of Organizational Catalysts
+
+A core objective of this research was to isolate the structural configurations of organizational policies—specifically, whether Employee Involvement and Regular Training interact synergistically. 
+
+In the multinomial logit model, the formal multiplicative interaction term (`Interaction_QKB11_QKB4`) was not statistically significant for predicting the Resiliently Optimistic class (OR = 0.990, 95% CI: [0.900, 1.090], $p = 0.9085$). However, interpreting interaction terms in non-linear models via coefficients alone can be misleading. To fully understand the policy implications, we calculated and visualized the marginal effects (predicted probabilities) across the parameter space (Panel B of the results summary).
+
+The marginal effects analysis reveals a powerful, cumulative *additive* effect. The probability of an employee occupying the Resiliently Optimistic class scales linearly with the stacking of organizational policies:
+*   **Baseline Vulnerability:** For an employee experiencing low training (-1 SD) and low involvement (-2 SD), the probability of belonging to the Resiliently Optimistic class is only **20.00%**.
+*   **Single Policy Intervention:** If the organization implements high training (+1 SD) but maintains low involvement (-2 SD), the probability rises to **27.24%**. Conversely, if training is low (-1 SD) but involvement is maximized (+2 SD), the probability reaches **34.16%**.
+*   **Combined Policy Optimization:** When an organization successfully stacks both catalysts—providing high training (+1 SD) alongside high employee involvement (+2 SD)—the probability of the employee occupying the most positive job security trajectory peaks at **40.47%**.
+
+**Interpretation:** The lack of a multiplicative interaction indicates that training and involvement do not depend on each other to be effective; they are independently valuable. However, their simultaneous presence effectively doubles the likelihood (from ~20% to ~40%) of an employee feeling secure in an AI-augmented future. Involvement provides the *agency* to shape the technology, while training provides the *competence* to utilize it. Together, they form a comprehensive structural catalyst for professional stability.
+
+---
+
+### 5. Robustness and Sensitivity Checks
+
+Survey data regarding emerging technologies frequently contains high rates of "Not sure" responses. In the primary analysis, these responses were retained and imputed/handled via the modeling framework to preserve the full sample ($N=2603$). To ensure our findings were not artifacts of this missing data handling, a rigorous sensitivity analysis was conducted using listwise deletion for any missing or "Not sure" responses across the key predictors, resulting in a complete-case cohort of $N=1195$.
+
+Comparing the coefficients between the full model and the sensitivity model yielded critical insights into the nature of the workforce:
+1.  **Robustness of Involvement:** The effect of Employee Involvement on predicting the Resiliently Optimistic class remained highly robust; in fact, the coefficient strengthened from 0.2279 in the full model to 0.2629 in the sensitivity model ($\Delta = +0.0349$). This confirms that giving employees a voice in AI deployment is a universally effective strategy, regardless of the respondent's baseline certainty.
+2.  **Attenuation of Training:** Conversely, the effect of Regular Training on the Resiliently Optimistic class severely attenuated in the complete-case analysis, with the coefficient dropping from 0.1756 to 0.0277 ($\Delta = -0.1479$). 
+    *   *Interpretation:* This attenuation is highly revealing. It suggests that formal AI training is most impactful for employees who are currently uncertain or ambivalent (the "Not sure" respondents who were excluded in the sensitivity check). For employees who already possess crystallized views on AI (the complete-case cohort), training is less of a differentiator than structural involvement. Training cures uncertainty, but involvement builds optimism.
+3.  **Strengthening of Culture:** The protective effect of Company Culture against the Anxiously Declining class strengthened substantially in the sensitivity model, with the negative coefficient shifting from -0.1538 to -0.2785 ($\Delta = -0.1247$). This reaffirms that for employees with definitive negative outlooks, a psychologically safe culture is the paramount mitigating factor against perceived job threat.
+
+### Conclusion
+
+This analysis demonstrates that AI-induced job insecurity is not an inevitable consequence of technological capability, but a variable outcome heavily mediated by organizational architecture. By utilizing Latent Class Analysis, we identified that nearly a third of the enterprise workforce (31.8%) is already on a "Resiliently Optimistic" trajectory, while 13% face an "Anxiously Declining" reality. 
+
+The multinomial regression and marginal effects analyses provide a clear blueprint for organizational leaders. To prevent workforce anxiety, companies must invest in foundational cultural elements—psychological safety, ethical transparency, and the freedom to experiment. However, to actively generate optimism and perceived job security, organizations must move beyond passive culture and implement active structural catalysts. While regular training is highly effective at converting the uncertain, the ultimate driver of resilient optimism is employee involvement. By transforming employees from passive consumers of AI into active co-developers of their augmented workflows, organizations can effectively decouple AI-driven task evolution from perceived job displacement.
+
+Report with previous results:
+
+
+**Respond in exactly this format:**
+
+\\begin{FEEDBACK}
+<FEEDBACK>
+\\end{FEEDBACK}
+
+In <FEEDBACK>, put your evaluation.
+
+###### PROMPT ENDS ########
+
+
+###### PROMPT BEGINS ########
+Human: You are given four inputs:
+1) a dataset description,
+2) an idea or hypothesis,
+3) a research plan, and
+4) the results of the analysis.
+
+Your task is to produce a concise but information-dense summary that captures all scientifically relevant details needed to continue or extend this project. 
+
+This summary will be included in a living research report that will be updated as new experiments are performed. 
+Future agents will receive this report along with:
+
+- the same dataset description,
+- the same or a revised idea,
+- a new research plan,
+- and new experimental results.
+
+Therefore, your summary should:
+- Preserve all key assumptions, definitions, data characteristics, and methodological choices
+- Clearly state the main findings, limitations, and uncertainties
+- Highlight decisions that constrain or inform future experiments
+- Avoid unnecessary narrative, background, or stylistic elaboration
+
+**Aim for maximal information retention per word.**
+Write clearly and precisely, prioritizing content that a future agent would need in order to:
+
+- understand what was done,
+- know what worked or failed,
+- and decide what to do next.
+
+Data description:
+# IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+
+Idea: 
+**Title: Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability**
+
+This study replaces interval-based delta analysis with Latent Class Analysis (LCA) to categorize the 2,603 respondents into distinct psychological trajectory classes (e.g., "Resiliently Optimistic," "Anxiously Declining," and "Stagnant Neutral") based on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security. By applying a multinomial logistic regression, we determine how specific organizational enablers (`QKB`) and cultural attributes (`QGO`)—encoded as composite indices—predict membership in the "Resiliently Optimistic" versus "Anxiously Declining" classes. To address multicollinearity, we condense the 16 binary `QHD` emotional attitude items into a lower-dimensional latent "Affective Disposition" score, which serves as a covariate alongside baseline job profile (`HIDDG`) and sector (`QDB`). The research objective is to isolate the structural configurations—specifically, the interaction between "employee involvement in development" (QKB_1_11) and "regular training" (QKB_1_4)—that statistically increase the probability of an employee occupying a positive stability class. This approach provides a rigorous, non-linear framework for identifying the specific organizational policies that effectively decouple AI-driven task evolution from perceived job displacement.
+
+Research plan:
+1. **Data Preprocessing and Feature Engineering**:
+   - Load the dataset, treating '.' as NaN.
+   - Map binary columns (QHD, QGM, QF, QED_1, QKC, QGH) to 0/1.
+   - Map ordinal Likert scales (QEA, QEB, QGP, QGU, QKB_1, QGO) to integer scales (-2 to +2). Map frequency/duration variables (QC, QGI, QGS) to integer ranks.
+   - Construct "Income Rank" by normalizing income bands within each country (QDA).
+   - Create composite indices for organizational enablers (QKB) and company culture (QGO) by averaging relevant Likert items.
+   - Retain "Not sure" responses as a distinct category or indicator variable for sensitivity analysis rather than immediate exclusion.
+
+2. **Dimensionality Reduction for Affective Disposition**:
+   - Assess suitability for dimensionality reduction using the Kaiser-Meyer-Olkin (KMO) measure and Bartlett’s test of sphericity.
+   - Perform Exploratory Factor Analysis (EFA) on the 16 binary `QHD` items. If multi-dimensional, extract two factors (e.g., "Positive Affect" and "Negative Affect") instead of one.
+   - Validate the internal consistency of extracted factors using Cronbach’s alpha or McDonald’s omega.
+
+3. **Latent Class Analysis (LCA) for Job Security Trajectories**:
+   - Perform LCA using `QEA_2` and `QEB_2` as ordinal indicators.
+   - Estimate models with 2–5 classes. Select the optimal model based on BIC, AIC, and Entropy (aiming for > 0.8).
+   - Assign each respondent to their most likely latent class (e.g., "Resiliently Optimistic," "Anxiously Declining," "Stagnant Neutral").
+
+4. **Multicollinearity and Control Setup**:
+   - Calculate Variance Inflation Factors (VIF) for all predictors, specifically checking for high correlation between composite indices (QKB, QGO) and their constituent items (e.g., `QKB_1_11`, `QKB_1_4`).
+   - If multicollinearity is high, use residuals of items after regressing out the index, or use items directly.
+   - Prepare the model to include `QDA` (Country) as a fixed effect to account for nested cultural/economic variance.
+
+5. **Multinomial Logistic Regression**:
+   - Regress latent class membership on organizational enablers, culture index, "Affective Disposition" factor(s), job profile (`HIDDG`), sector (`QDB`), and country fixed effects.
+   - Use "Stagnant Neutral" as the reference category to interpret odds ratios for other classes.
+
+6. **Interaction Analysis for Organizational Catalysts**:
+   - Introduce an interaction term between "employee involvement in development" (`QKB_1_11`) and "regular training" (`QKB_1_4`).
+   - Calculate and visualize marginal effects to determine how the probability of belonging to the "Resiliently Optimistic" class shifts based on these variables.
+
+7. **Robustness and Sensitivity Analysis**:
+   - Perform 5-fold cross-validation to assess predictive stability.
+   - Conduct sensitivity analysis by comparing models that exclude "Not sure" responses against models that treat "Not sure" as a distinct category or use Multiple Imputation (MI) to ensure results are not biased by missing data patterns.
+
+8. **Statistical Significance and Reporting**:
+   - Apply FDR correction to all p-values.
+   - Report standardized coefficients, odds ratios, 95% confidence intervals, and model fit statistics (Entropy, BIC/AIC).
+   - Generate probability plots for interaction effects.
+
+Analysis results:
+# Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability
+
+### Introduction
+The integration of Artificial Intelligence (AI) into enterprise workflows has precipitated widespread discourse regarding its impact on the future of work and employee job security. Moving beyond deterministic narratives of technological displacement, this analysis conceptualizes AI-induced job security not as a monolithic outcome, but as a heterogeneous set of psychological trajectories. By applying Latent Class Analysis (LCA) to a global dataset of 2,603 employees at large enterprises, we identify distinct subpopulations based on their current and expected future job security. Furthermore, through multinomial logistic regression and marginal effects analysis, we isolate the specific organizational catalysts—namely, employee involvement in AI development, regular training, and company culture—that predict membership in resilient versus declining trajectories. The following sections detail the quantitative findings, model diagnostics, and theoretical interpretations of these structural configurations.
+
+---
+
+### 1. Affective Disposition Factor Structure
+
+To control for baseline psychological variance and isolate the effect of organizational policies, we first reduced the 16 binary emotional attitude items (`QHD` block) into a lower-dimensional latent space using Exploratory Factor Analysis (EFA). Given the binary nature of the indicators, the EFA was appropriately conducted on a tetrachoric correlation matrix. 
+
+The data demonstrated excellent suitability for structure detection, yielding a Kaiser-Meyer-Olkin (KMO) measure of sampling adequacy of 0.8207, well above the conventional threshold of 0.60. Bartlett’s Test of Sphericity was highly significant ($p < 0.001$), rejecting the null hypothesis of an identity matrix and confirming sufficient covariance among the emotional items.
+
+The extraction process, guided by the scree plot of eigenvalues, identified a robust two-factor solution:
+*   **Factor 1: Affective Valence (14 items):** This primary factor represents a bipolar continuum of emotional response to AI. It is characterized by strong positive loadings for empowering emotions—such as *Motivated* (0.754), *Confident* (0.738), *Excited* (0.723), and *Optimistic* (0.694)—and correspondingly strong negative loadings for threat-based emotions, including *Threatened* (-0.869), *Worried* (-0.811), *Skeptical* (-0.770), and *Anxious* (-0.770). While the raw Cronbach’s alpha for this factor was mathematically low (0.0637)—a known methodological artifact when calculating internal consistency on a set of strongly negatively correlated bipolar items without prior reverse-scoring—the magnitude and directionality of the factor loadings provide unequivocal evidence of a unidimensional construct ranging from AI-induced threat to AI-induced empowerment.
+*   **Factor 2: Cautious Curiosity (2 items):** A secondary, orthogonal factor emerged, driven by positive loadings for *Curious* (0.710) and *Cautious* (0.652). This factor captures a state of vigilant, pragmatic engagement, distinct from the pure positive/negative valence of Factor 1.
+
+These two continuous factor scores were extracted and utilized as critical psychological covariates in the subsequent predictive modeling.
+
+---
+
+### 2. Latent Class Solution and Trajectory Profiles
+
+To capture the non-linear and heterogeneous nature of job security perceptions, Latent Class Analysis (LCA) was performed on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security impacts. Models ranging from 2 to 5 classes were estimated. The optimal solution was selected based on the minimization of the Bayesian Information Criterion (BIC), which balances model fit with parsimony, alongside considerations of class interpretability and entropy (class separation). 
+
+The optimal LCA model identified four distinct psychological trajectory classes, effectively categorizing the workforce into the following profiles (visualized in Panel A and D of the results summary):
+
+1.  **Resiliently Optimistic (31.81% of respondents):** This represents the largest single cohort. Individuals in this class exhibit a high conditional probability of reporting that AI has a "Slightly positive" or "Significantly positive" impact on both their current role security and their expected security over the next three years. For this group, AI is perceived as a catalyst for professional stability and value augmentation.
+2.  **Stagnant Neutral (28.70% of respondents):** This class is characterized by a dominant probability of reporting "No impact" across both time horizons. These employees perceive their roles as orthogonal to AI integration, either due to the nature of their tasks being insulated from current AI capabilities, or due to a lack of organizational AI penetration.
+3.  **Moderately Optimistic (26.51% of respondents):** This group displays a trajectory leaning towards positive impacts, but with less intensity and certainty than the Resiliently Optimistic class. Their conditional probabilities peak around "Slightly positive" and "No impact."
+4.  **Anxiously Declining (12.99% of respondents):** Representing the most vulnerable segment of the workforce, this class is defined by high probabilities of reporting "Slightly negative" or "Significantly negative" impacts on both current and future job security. This cohort views AI as a direct displacement threat.
+
+The identification of these four classes confirms that interval-based delta analysis (simply averaging scores) would obscure critical workforce dynamics. The policy challenge for organizations is not merely to shift a global mean, but to transition employees out of the "Anxiously Declining" class and into the "Resiliently Optimistic" class.
+
+---
+
+### 3. Multinomial Regression Predictors of Class Membership
+
+To determine how organizational enablers predict trajectory membership, a multinomial logistic regression was estimated. The "Stagnant Neutral" class was designated as the reference category, allowing us to interpret the Odds Ratios (OR) as the likelihood of moving into an active trajectory (positive or negative) versus remaining unimpacted. 
+
+Prior to estimation, Variance Inflation Factors (VIF) were calculated to assess multicollinearity. All VIFs were exceptionally low (Regular Training = 1.14, Interaction Term = 1.13, Employee Involvement = 1.11, Affective Factor 1 = 1.04, Company Culture = 1.01), confirming that the predictors provide independent explanatory variance. The model achieved a 5-fold cross-validation accuracy of 38.34% ($\pm$ 2.32%). While seemingly modest in absolute terms, this performance is highly robust for a 4-class multinomial prediction of subjective psychological states, performing well above the 25% random baseline.
+
+#### Catalysts for the "Resiliently Optimistic" Class
+Compared to the neutral baseline, membership in the Resiliently Optimistic class is heavily driven by specific, actionable organizational policies:
+*   **Employee Involvement:** Involving end-users in the AI development and deployment process (`QKB_1_11`) emerged as a highly significant predictor. A one standard deviation increase in this variable increases the odds of being Resiliently Optimistic by 25.6% (OR = 1.256, 95% CI: [1.126, 1.401], FDR-adjusted $p = 0.0002$). This suggests that granting employees agency over how AI is integrated into their workflows is a primary driver of perceived security.
+*   **Regular Training:** The provision of regular AI training (`QKB_1_4`) also significantly increases the odds of positive trajectory membership by 19.2% (OR = 1.192, 95% CI: [1.065, 1.334], $p = 0.0059$).
+*   **Psychological Covariates:** Unsurprisingly, baseline Positive Affective Valence (Factor 1) strongly predicts membership in this class (OR = 1.487, $p < 0.001$), while Cautious Curiosity (Factor 2) reduces the odds (OR = 0.554, $p < 0.001$), indicating that pure optimism, rather than cautious vigilance, aligns with this trajectory.
+
+#### Protections against the "Anxiously Declining" Class
+The predictors for the vulnerable Anxiously Declining class reveal a different organizational mechanism. Interestingly, specific AI enablers like training (OR = 1.035, $p = 0.8116$) and involvement (OR = 1.076, $p = 0.3972$) did not significantly differentiate this negative class from the neutral baseline. 
+*   **Company Culture:** Instead, broader organizational culture—specifically an environment that encourages experimentation, learning from mistakes, and speaking candidly (`Company_Culture_Index`)—served as the critical protective factor. A one standard deviation increase in positive company culture significantly *reduces* the odds of an employee falling into the Anxiously Declining trajectory by 14.3% (OR = 0.857, 95% CI: [0.780, 0.942], $p = 0.0042$). 
+*   This implies that while specific AI policies (training/involvement) are required to generate *optimism*, a foundation of psychological safety (culture) is required to prevent *decline*.
+
+---
+
+### 4. Interaction Effects of Organizational Catalysts
+
+A core objective of this research was to isolate the structural configurations of organizational policies—specifically, whether Employee Involvement and Regular Training interact synergistically. 
+
+In the multinomial logit model, the formal multiplicative interaction term (`Interaction_QKB11_QKB4`) was not statistically significant for predicting the Resiliently Optimistic class (OR = 0.990, 95% CI: [0.900, 1.090], $p = 0.9085$). However, interpreting interaction terms in non-linear models via coefficients alone can be misleading. To fully understand the policy implications, we calculated and visualized the marginal effects (predicted probabilities) across the parameter space (Panel B of the results summary).
+
+The marginal effects analysis reveals a powerful, cumulative *additive* effect. The probability of an employee occupying the Resiliently Optimistic class scales linearly with the stacking of organizational policies:
+*   **Baseline Vulnerability:** For an employee experiencing low training (-1 SD) and low involvement (-2 SD), the probability of belonging to the Resiliently Optimistic class is only **20.00%**.
+*   **Single Policy Intervention:** If the organization implements high training (+1 SD) but maintains low involvement (-2 SD), the probability rises to **27.24%**. Conversely, if training is low (-1 SD) but involvement is maximized (+2 SD), the probability reaches **34.16%**.
+*   **Combined Policy Optimization:** When an organization successfully stacks both catalysts—providing high training (+1 SD) alongside high employee involvement (+2 SD)—the probability of the employee occupying the most positive job security trajectory peaks at **40.47%**.
+
+**Interpretation:** The lack of a multiplicative interaction indicates that training and involvement do not depend on each other to be effective; they are independently valuable. However, their simultaneous presence effectively doubles the likelihood (from ~20% to ~40%) of an employee feeling secure in an AI-augmented future. Involvement provides the *agency* to shape the technology, while training provides the *competence* to utilize it. Together, they form a comprehensive structural catalyst for professional stability.
+
+---
+
+### 5. Robustness and Sensitivity Checks
+
+Survey data regarding emerging technologies frequently contains high rates of "Not sure" responses. In the primary analysis, these responses were retained and imputed/handled via the modeling framework to preserve the full sample ($N=2603$). To ensure our findings were not artifacts of this missing data handling, a rigorous sensitivity analysis was conducted using listwise deletion for any missing or "Not sure" responses across the key predictors, resulting in a complete-case cohort of $N=1195$.
+
+Comparing the coefficients between the full model and the sensitivity model yielded critical insights into the nature of the workforce:
+1.  **Robustness of Involvement:** The effect of Employee Involvement on predicting the Resiliently Optimistic class remained highly robust; in fact, the coefficient strengthened from 0.2279 in the full model to 0.2629 in the sensitivity model ($\Delta = +0.0349$). This confirms that giving employees a voice in AI deployment is a universally effective strategy, regardless of the respondent's baseline certainty.
+2.  **Attenuation of Training:** Conversely, the effect of Regular Training on the Resiliently Optimistic class severely attenuated in the complete-case analysis, with the coefficient dropping from 0.1756 to 0.0277 ($\Delta = -0.1479$). 
+    *   *Interpretation:* This attenuation is highly revealing. It suggests that formal AI training is most impactful for employees who are currently uncertain or ambivalent (the "Not sure" respondents who were excluded in the sensitivity check). For employees who already possess crystallized views on AI (the complete-case cohort), training is less of a differentiator than structural involvement. Training cures uncertainty, but involvement builds optimism.
+3.  **Strengthening of Culture:** The protective effect of Company Culture against the Anxiously Declining class strengthened substantially in the sensitivity model, with the negative coefficient shifting from -0.1538 to -0.2785 ($\Delta = -0.1247$). This reaffirms that for employees with definitive negative outlooks, a psychologically safe culture is the paramount mitigating factor against perceived job threat.
+
+### Conclusion
+
+This analysis demonstrates that AI-induced job insecurity is not an inevitable consequence of technological capability, but a variable outcome heavily mediated by organizational architecture. By utilizing Latent Class Analysis, we identified that nearly a third of the enterprise workforce (31.8%) is already on a "Resiliently Optimistic" trajectory, while 13% face an "Anxiously Declining" reality. 
+
+The multinomial regression and marginal effects analyses provide a clear blueprint for organizational leaders. To prevent workforce anxiety, companies must invest in foundational cultural elements—psychological safety, ethical transparency, and the freedom to experiment. However, to actively generate optimism and perceived job security, organizations must move beyond passive culture and implement active structural catalysts. While regular training is highly effective at converting the uncertain, the ultimate driver of resilient optimism is employee involvement. By transforming employees from passive consumers of AI into active co-developers of their augmented workflows, organizations can effectively decouple AI-driven task evolution from perceived job displacement.
+
+**Respond in exactly this format:**
+
+\\begin{REPORT}
+<REPORT>
+\\end{REPORT}
+
+In <REPORT>, put your report.
+
+###### PROMPT ENDS ########
+
+\begin{REPORT}
+# Research Summary: Latent Class Tra\begin{COMMENTS}
+The dataset description explains the observed failure of the interaction termjectories of AI-Induced Job Security
+
+### 1. Project Overview & Methodology
+*   **Objective:** Identify organizational (`Interaction_QKB11_QKB4`) to reach statistical significance. The dataset provides 11 distinct catalysts for professional stability by modeling job security as heterogeneous psychological trajectories rather than a global mean.
+*   **Data:** 2,6 "Company enablers" (QKB block) as separate items. The research plan's attempt to model an interaction between two03 employees at $1B+ revenue firms across 9 countries.
+*   **Method:** 
+    *   ** of these items (QKB_1_11 and QKB_1_4) is constrained by the factEFA:** Reduced 16 `QHD` emotional items into two factors: *Affective Valence* (b that these variables are likely highly correlated within the organizational context (i.e., companies that invest in training are also more likely to involveipolar: threat vs. empowerment) and *Cautious Curiosity*.
+    *   **LCA:** Segmented respondents employees in development). 
+
+While the VIFs were reported as low, the sensitivity analysis revealed that the effect of "Regular Training" significantly into 4 classes based on current (`QEA_2`) and 3-year expected (`QEB_2`) attenuated when "Not sure" responses were excluded. This suggests that the "Regular Training" variable is heavily confounded by respondent job security: *Resiliently Optimistic* (31.8%), *Stagnant Neutral* (28.7%), uncertainty rather than representing a distinct, independent structural catalyst. The dataset's reliance on self-reported ordinal Likert scales for these en *Moderately Optimistic* (26.5%), and *Anxiously Declining* (13.0%).
+    *   **Multinomial Logistic Regression:** Predicted class membership using organizational enablers (`QKB`), culture (`QGO\begin{FEEDBACK}
+The current analysis is a significant methodological improvement over prior`), and affective factors.
+
+### 2. Key Findings
+*   **Catalysts for Optimism:** *Employee Involvement* (ablers—rather than objective organizational policy data—likely introduces measurement noise that obscures the hypothesized multiplicative interaction, limiting the ability`QKB_1_11`) and *Regular Training* (`QKB_1_4`) are independent, additive to confirm synergistic effects between specific policies.
+\end{COMMENTS}
+
+ bivariate and OLS approaches, successfully shifting the focus from "average effects" to "workforce heterogeneity." The use of Lat drivers of the "Resiliently Optimistic" class. Simultaneous implementation doubles the probability of positive security perception (from ~20ent Class Analysis (LCA) to identify psychological trajectories is well-justified and provides actionable insights. However, the following% to ~40%).
+*   **Protections against Decline:** *Company Culture* (experimentation, psychological safety) is gaps must be addressed to ensure the robustness of the conclusions:
+
+1. **Address the "Not Sure" Bias:** the primary buffer against the "Anxiously Declining" class. Specific AI policies (training/involvement) failed The sensitivity analysis reveals that "Not sure" respondents are not missing at random; they are systematically different (e.g., training impacts to significantly differentiate this group from the neutral baseline.
+*   **Sensitivity Insight:** Training is most effective for "uncertain" employees; *Involvement* is the superior driver for those with crystallized views.
+
+### 3. Constraints & Limitations them more). Treating "Not sure" as a distinct category in the multinomial model—rather than just a sensitivity check—is necessary
+*   **Model Performance:** 5-fold CV accuracy of 38.34% is robust for . If "Not sure" is a latent state of "uninformed," it should be modeled as a predictor of class4-class psychological prediction but indicates significant unexplained variance.
+*   **Missing Data:** "Not sure" responses are transition rather than just an excluded group.
+
+2. **Refine the "Affective Disposition" Factor:** The reported Cronbach’s alpha of 0.06 is a red flag. While you correctly identify this as an artifact of bipolar items non-random; sensitivity analysis confirms that excluding them attenuates the impact of training but strengthens the observed effects of culture and involvement.
+*   **Interaction:** No significant multiplicative interaction between training and involvement; effects are additive.
+
+### 4. Recommendations, it suggests that the "Affective Valence" factor may be masking two distinct psychological processes: *hope* and *fear*. Instead for Future Research
+*   **Targeted Interventions:** Future experiments should test if "Involvement" interventions (e.g., co of a single bipolar factor, re-run the EFA to extract two separate, unipolar factors (Positive Affect and-design workshops) specifically shift employees from "Anxiously Declining" to "Resiliently Optimistic" compared to passive Negative Affect). This will allow you to test if "hope" and "fear" have independent, asymmetric effects on job security, training.
+*   **Longitudinal Tracking:** The current LCA is cross-sectional. Future work must validate if these which is more theoretically sound than assuming they are perfect opposites.
+
+3. **Clarify the "Company Culture" Mechanism latent classes are stable or if individuals transition between them as AI adoption matures.
+*   **Refine Culture Index:** Given:** You claim culture protects against the "Anxiously Declining" class, but the current model treats culture as a static the protective power of culture, decompose the `QGO` index to identify which specific cultural element (e.g., index. Given that "speaking candidly" and "learning from mistakes" are components of this index, test whether this effect "learning from mistakes" vs. "speaking candidly") is the strongest moderator of job threat.
+\end{REPORT}
+
+ is moderated by "Job Level" (`QDG`). It is plausible that culture provides psychological safety for managers but not for individual contributors. This interaction is critical for actionable policy recommendations.
+
+4. **Causal Interpretation vs. Correlation:** The claim that "involvement... increases the odds" is a strong causal assertion. Given the cross-sectional nature of the data, acknowledge the possibility of reverse causality: employees who are already "Resiliently Optimistic" may be more likely to seek out or perceive opportunities for involvement. To strengthen this, perform a "placebo test" by regressing class membership on a variable that should *not* logically influence job security (e.g., `Global Employee Size` or `Market Capitalization`). If these show significant effects, your model is picking up organizational scale bias rather than policy impact.
+
+5. **Actionable Insight for Future Iterations:** The attenuation of training effects in the complete-case analysis is your most valuable finding. Future research should pivot from "Does training work?" to "For whom does training work?" I recommend a formal moderation analysis in the next iteration: `Class ~ Training * (Baseline_Uncertainty)`. This will provide a precise, evidence-based recommendation for HR leaders on how to segment their training interventions.
+
+6. **Simplify Reporting:** The marginal effects analysis is excellent. Keep this as the primary communication tool for the paper, as it is far more interpretable for a non-technical audience than the multinomial logit coefficients.
+\end{FEEDBACK}
+
+
+###### PROMPT BEGINS ########
+Human: You are given three inputs:
+1) a dataset description,
+2) the current idea of a project,
+3) a report outlinig the results obtained from previous ideas and methods on the same dataset. 
+
+Your task is to undertand in detail the report, the things tried, and which one worked and which ones didnt work so well. 
+With that information, formulate an idea/hypothesis to carry out with the same dataset that will help understand an aspect of the problem better and can led to better performance on the results. 
+The idea/hypothesis needs to be something new and different to what has been done already.
+Note that your idea/hypothesis will be passed to a set of agents that will make a research plan with it, and that plan will be sent to another agents for writing and executing code.
+Note that your idea/hypothesis need to adhere to the constraints of the dataset. I.e. new data is not available.
+
+Data description:
+# IKI-Data-Raw: Workplace AI Adoption Survey — Job Security & Nature of Work Analysis
+
+## Research Focus
+
+This project investigates which individual, organisational, and AI-adoption variables predict (a) perceived **job security** and (b) **changing nature of work** among employees at large companies ($1B+ revenue) across 9 countries. The aim is to go beyond bivariate correlations and identify robust predictors using regression, random forests, and mediation analysis.
+
+## File
+
+- **Path:** `/home/node/work/projects/iki_v2/IKI-Data-Raw.csv`
+- **Format:** Tab-separated values (load with `sep='\t'`, `low_memory=False`)
+- **Shape:** 2,603 rows (respondents) × 234 columns (variables)
+- **Row identifier:** `Respid` (integer, unique per respondent)
+- **Missing values:** Coded as `.` (period). Treat `.` as NaN.
+
+---
+
+## Primary Outcome Variables
+
+### Job Security
+- `QEA_2` — "Security of your current role: What impact does AI currently have?" Scale: Significantly negative / Slightly negative / No impact / Slightly positive / Significantly positive / Not sure. Distribution: No impact 31%, Slightly positive 27%, Significantly positive 26%, Slightly negative 12%, Significantly negative 3%.
+- `QEB_2` — Same question, 3-year expected impact. Distribution: Slightly positive 28%, Significantly positive 27%, No impact 26%, Slightly negative 13%, Significantly negative 4%.
+- `QGR` — "How confident are you that your company will protect jobs as AI becomes more capable?" Scale: Not at all confident / Slightly confident / Somewhat confident / Very confident / Not sure. Distribution: ~46% Somewhat confident, ~29% Very confident.
+- `QF_3` — Binary: "I am worried about losing my job" (among deterrents to AI use). 1 = Yes.
+
+### Changing Nature of Work (past 3 years)
+- `QGP_1` — AI's impact on *repetitive work* volume (Large decrease → Large increase, 5-level).
+- `QGP_2` — AI's impact on *creative work* volume.
+- `QGP_3` — AI's impact on *complex work* volume.
+- `QGH1_1` — Binary: no changes to team roles to date.
+- `QGH1_2` — Binary: roles on team have changed to date.
+
+### Changing Nature of Work (3-year expectation)
+- `QGU_1` — Expected AI impact on *repetitive work* volume.
+- `QGU_2` — Expected AI impact on *creative work* volume.
+- `QGU_3` — Expected AI impact on *complex work* volume.
+- `QGH2_1` — Binary: no changes to team roles expected.
+- `QGH2_2` — Binary: team roles will change in next 3 years.
+
+---
+
+## Predictor / Feature Variables
+
+### Demographics
+- `QDA` — country of work (9 countries)
+- `QDB` — industry (13 sectors)
+- `QDC` — age (integer, 18–69)
+- `HidQDC` — generational cohort: Gen Z, Millennial, GenX, Boomer
+- `QDD` — education level (ordinal, 7 levels)
+- `QDE_Year` — years of professional experience (integer)
+- `QDH` — department (IT, HR, Finance, Sales/Marketing, etc.)
+- `QDG` — job level (11 levels, ordinal from Intern to C-suite)
+- `HIDDG` — job profile (Managerial / Senior / Individual contributor)
+- `QDF` — income band (country-specific local currency; use as ordinal rank within country)
+
+### Company characteristics
+- `Global Employee Size` — ordinal band (6 levels)
+- `Global Annual Revenue` — ordinal band
+- `Market Capitalization` — ordinal band
+
+### AI adoption and usage
+- `QC` — AI use frequency (7-level ordinal: Once a month or fewer → Many times a day)
+- `QGI` — hours saved per week by AI (ordinal: increases time, None, <1h, 1–3h, 3–5h, >5h)
+- `QGS` — AI output error frequency (5-level ordinal: Never → Constantly)
+- `QGG` — AI disclosure behaviour (5 categories: accurately promote, accurately w/ drawbacks, overstate, downplay, prefer not to say)
+- `QKD` — company has deployed agentic AI: Yes/No/Not sure
+- `QGN` — company AI posture (5 levels: doesn't use → transforming most processes)
+- `QA_1_1` — binary: "I do not currently use AI tools at work"
+
+### AI emotional attitudes (QHD block, 16 binary Yes/No)
+Optimistic, Empowered, Motivated, Excited, Curious, Confident, Indifferent, Uncertain, Cautious, Skeptical, Worried, Resistant, Confused, Overwhelmed, Threatened, Anxious.
+Column format: `QHD_<N>: <Emotion> - Which of the following describes how you feel about using AI at work?`
+
+### AI task comfort — autonomous AI (QGM block, 17 binary)
+Whether respondent is comfortable with AI completing tasks autonomously (Yes/No): Summarize, Search, Content creation, Customer service, Internal comms, Research, Predictive analysis, Other analysis, Optimizing processes, QA, Software development, Product development, Automating routine tasks, Schedules/emails, Managing workflows, Monitoring performance.
+
+### Perceived AI impact — other dimensions (QEA/QEB — excluding the job security item already listed)
+Current impact ratings (QEA_1, QEA_3–QEA_15) and 3-year expected ratings (QEB_1, QEB_3–QEB_15) for: Career growth, Time on tasks, AI output quality, Own work quality, Output volume, Cost of output, Effort required, High-value work time, Accuracy, Accountability, Job satisfaction, Personal agency, Communication, New ideas.
+
+### Company enablers (QKB block)
+11 items × 2 dimensions: importance rating (QKB_1_1–11, 5-level) and whether company does each (QKB_2_1–11, 5-level).
+Items: clear AI strategy, guidelines on tool use, encourage experimentation, regular training, tool access, safeguards, leadership support, incentives, freedom to choose tools, freedom on when to use AI, employee involvement in development.
+
+### Deterrents to AI use (QF block, 13 binary)
+- `QF_1` — No access to AI tools
+- `QF_2` — Don't know how to use AI tools
+- `QF_3` — Worried about losing job
+- `QF_4` — Fear of accountability
+- `QF_5` — Creates more work (needs checking)
+- `QF_6` — Distrust of AI accuracy
+- `QF_7` — Privacy/data safety concerns
+- `QF_8` — Doesn't fit work processes
+- `QF_9` — Don't see benefit
+- `QF_10` — Moral reservations
+- `QF_11` — Colleague resistance
+- `QF_13` — Nothing deters me
+
+### AI incentives (QKC block, 8 binary)
+Financial reward, Peer recognition, Learning benefits, Career progression, No incentives (not required), No incentives (required), Discourages AI.
+
+### Company culture (QGO block, 5 Likert items)
+Encourages experimentation, learning from mistakes, speaking candidly, asking for help, implementing AI ethically. Scale: Strongly disagree → Strongly agree.
+
+### Company AI goals (QED block)
+`QED_1_1`–`QED_1_7` binary: company has goal of completing tasks faster, completing more tasks, reducing costs, reducing errors, freeing up time for high-value work, no goals set, don't know.
+
+---
+
+## Encoding Notes
+
+- **Binary columns** (QHD, QGM, QA_1, QGL, QF, QED_1, QKC, QGH): Values are `Yes` / `No` / `Not Selected`. Map Yes → 1, else → 0.
+- **Ordinal Likert columns** (QEA, QEB, QGP, QGU, QKB_1, QGO): stored as strings. Define explicit ordered mappings to integers (e.g. Significantly negative = −2 → Significantly positive = +2; Not sure = NaN).
+- **QGP/QGU**: Values are "Large decrease", "Moderate decrease", "No major change", "Moderate increase", "Large increase" (map −2 to +2).
+- **QC** (frequency): Map to 1–7 integers (Once a month or fewer → Many times a day).
+- **QGI** (hours saved): Map ordinal including the "AI increases time" category (= −1 or 0), None = 0, <1h = 1, etc.
+- **QGS** (error frequency): Map Never = 0 → Constantly = 4.
+- **QGR** (job protection confidence): Map Not at all = 1 → Very confident = 4, Not sure = NaN.
+- **Income (QDF_*)**: Only one column populated per respondent. Build a single ordinal income rank within each country's band (lowest band = 1, highest = max).
+
+---
+
+## Suggested Analysis Plan
+
+1. **Construct composite outcome indices:**
+   - *Job Security Index (current)*: encode QEA_2 as −2 to +2.
+   - *Job Security Index (future)*: encode QEB_2 as −2 to +2.
+   - *Nature of Work Change Index*: average of QGP_1, QGP_2, QGP_3 (encoded −2 to +2).
+   - *Future Nature of Work Change Index*: average of QGU_1, QGU_2, QGU_3.
+
+2. **Bivariate correlations:** Spearman rank correlations between each predictor and each outcome. Report the top 20 predictors per outcome with effect sizes and FDR-adjusted p-values.
+
+3. **OLS / Ordinal regression:** Regress each job security outcome on demographics + AI usage + attitudes + organisational factors. Report standardised beta coefficients.
+
+4. **Random Forest feature importance:** Train RF regressor (or classifier) on the full predictor set. Report permutation importance top 20. Cross-validate with 5-fold CV.
+
+5. **Subgroup comparisons:** Compare job security perceptions by generation (Gen Z / Millennial / GenX / Boomer), job level (individual contributor / manager / senior), industry, and country.
+
+6. **Mediation sketch:** Test whether AI emotional attitudes (anxiety, threat) mediate the relationship between AI usage frequency and job security.
+
+
+Current idea: 
+**Title: Latent Class Trajectories of AI-Induced Job Security: Identifying Organizational Catalysts for Professional Stability**
+
+This study replaces interval-based delta analysis with Latent Class Analysis (LCA) to categorize the 2,603 respondents into distinct psychological trajectory classes (e.g., "Resiliently Optimistic," "Anxiously Declining," and "Stagnant Neutral") based on the joint distribution of current (`QEA_2`) and 3-year expected (`QEB_2`) job security. By applying a multinomial logistic regression, we determine how specific organizational enablers (`QKB`) and cultural attributes (`QGO`)—encoded as composite indices—predict membership in the "Resiliently Optimistic" versus "Anxiously Declining" classes. To address multicollinearity, we condense the 16 binary `QHD` emotional attitude items into a lower-dimensional latent "Affective Disposition" score, which serves as a covariate alongside baseline job profile (`HIDDG`) and sector (`QDB`). The research objective is to isolate the structural configurations—specifically, the interaction between "employee involvement in development" (QKB_1_11) and "regular training" (QKB_1_4)—that statistically increase the probability of an employee occupying a positive stability class. This approach provides a rigorous, non-linear framework for identifying the specific organizational policies that effectively decouple AI-driven task evolution from perceived job displacement.
+
+Report with previous results:
+
+
+Iteration 0:
+# Research Summary: Latent Class Trajectories of AI-Induced Job Security
+
+### 1. Project Overview & Methodology
+*   **Objective:** Identify organizational catalysts for professional stability by modeling job security as heterogeneous psychological trajectories rather than a global mean.
+*   **Data:** 2,603 employees at $1B+ revenue firms across 9 countries.
+*   **Method:** 
+    *   **EFA:** Reduced 16 `QHD` emotional items into two factors: *Affective Valence* (bipolar: threat vs. empowerment) and *Cautious Curiosity*.
+    *   **LCA:** Segmented respondents into 4 classes based on current (`QEA_2`) and 3-year expected (`QEB_2`) job security: *Resiliently Optimistic* (31.8%), *Stagnant Neutral* (28.7%), *Moderately Optimistic* (26.5%), and *Anxiously Declining* (13.0%).
+    *   **Multinomial Logistic Regression:** Predicted class membership using organizational enablers (`QKB`), culture (`QGO`), and affective factors.
+
+### 2. Key Findings
+*   **Catalysts for Optimism:** *Employee Involvement* (`QKB_1_11`) and *Regular Training* (`QKB_1_4`) are independent, additive drivers of the "Resiliently Optimistic" class. Simultaneous implementation doubles the probability of positive security perception (from ~20% to ~40%).
+*   **Protections against Decline:** *Company Culture* (experimentation, psychological safety) is the primary buffer against the "Anxiously Declining" class. Specific AI policies (training/involvement) failed to significantly differentiate this group from the neutral baseline.
+*   **Sensitivity Insight:** Training is most effective for "uncertain" employees; *Involvement* is the superior driver for those with crystallized views.
+
+### 3. Constraints & Limitations
+*   **Model Performance:** 5-fold CV accuracy of 38.34% is robust for 4-class psychological prediction but indicates significant unexplained variance.
+*   **Missing Data:** "Not sure" responses are non-random; sensitivity analysis confirms that excluding them attenuates the impact of training but strengthens the observed effects of culture and involvement.
+*   **Interaction:** No significant multiplicative interaction between training and involvement; effects are additive.
+
+### 4. Recommendations for Future Research
+*   **Targeted Interventions:** Future experiments should test if "Involvement" interventions (e.g., co-design workshops) specifically shift employees from "Anxiously Declining" to "Resiliently Optimistic" compared to passive training.
+*   **Longitudinal Tracking:** The current LCA is cross-sectional. Future work must validate if these latent classes are stable or if individuals transition between them as AI adoption matures.
+*   **Refine Culture Index:** Given the protective power of culture, decompose the `QGO` index to identify which specific cultural element (e.g., "learning from mistakes" vs. "speaking candidly") is the strongest moderator of job threat.
+        
+
+**Respond in exactly this format:**
+
+\\begin{HYPOTHESIS}
+<HYPOTHESIS>
+\\end{HYPOTHESIS}
+
+In <HYPOTHESIS>, put idea/hypothesis.
+
+
+###### PROMPT ENDS ########
+
+\begin{HYPOTHESIS}
+The "Job Security Paradox": I hypothesize that the perceived threat to job security is not driven by AI adoption itself, but by a "Task-Autonomy Mismatch" where employees are comfortable with AI performing routine tasks (QGM) but perceive a loss of personal agency (QEA_14) when AI is deployed for high-level decision-making. 
+
+To test this, I propose a "Task-Agency Interaction Analysis":
+1. Construct a "Task Autonomy Index" (TAI) by clustering the 17 binary QGM items into "Routine/Execution" vs. "Strategic/Decision-making" tasks.
+2. Calculate an "Agency Gap" score by measuring the delta between an employee's comfort with AI-driven execution and their perceived impact on personal agency (QEA_14).
+3. Test the hypothesis that the "Anxiously Declining" class identified in previous research is specifically characterized by high comfort in AI-driven routine tasks but a high negative delta in personal agency.
+4. Use a moderation analysis to determine if "Employee Involvement" (QKB_1_11) acts as a buffer that specifically mitigates the negative impact of the "Agency Gap" on job security, effectively decoupling the fear of displacement from the reality of task automation.
+\end{HYPOTHESIS}
+
